@@ -139,7 +139,9 @@ To see the other outcome, repeat 7.1 and 7.2 with a second request and press **R
 | All Requests | Open the request. | **Request Detail**, read-only, with the attachment and `APPROVED`. |
 | Audit | Open **Audit**; enter the request's ID and press **Filter**. | The events of that request: `REQUEST_CREATED`, `REQUEST_UPDATED`, `ATTACHMENT_ADDED`, `REQUEST_SUBMITTED`, `REQUEST_APPROVED`, newest first. |
 
-If everything above happened, the Milestone 1 criteria (local demo) in [`GETTING_STARTED.md`](GETTING_STARTED.md#45-milestone-1-pass-criteria) or the Milestone 3 criteria (AWS) in [`GETTING_STARTED.md`](GETTING_STARTED.md#10-milestone-3-pass-criteria) are met.
+In the local demo, also run `npm run demo:deliveries`: it lists the submit and approve emails and events that were recorded, including the state transitions (`DRAFT -> SUBMITTED`, `SUBMITTED -> APPROVED`).
+
+If everything above happened, the Milestone 1 criteria (local demo; **Local demo PASS**) in [`GETTING_STARTED.md`](GETTING_STARTED.md#45-milestone-1-pass-criteria) or the Milestone 3 criteria (AWS) in [`GETTING_STARTED.md`](GETTING_STARTED.md#10-milestone-3-pass-criteria) are met.
 
 ## 8. When something goes wrong
 
