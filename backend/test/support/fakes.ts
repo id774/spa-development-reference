@@ -1,4 +1,25 @@
+// backend/test/support/fakes.ts: test support: fakes and fixed identities
+//
+// Description:
+// Provides the deterministic clock, sequential id generator, fake object
+// storage and identity provider, and the fixed identities (requester, other
+// requester, approver, administrator, and a user with no role) shared by the
+// backend tests. It is test support, not a test suite.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { Readable } from 'node:stream';
 import type { Identity, IdentityProvider } from '../../src/capabilities/shared/identity.js';
 import type { ObjectStorage } from '../../src/capabilities/shared/ports.js';

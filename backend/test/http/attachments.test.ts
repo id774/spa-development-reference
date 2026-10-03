@@ -1,4 +1,39 @@
+// backend/test/http/attachments.test.ts: tests of the attachment HTTP behavior
+//
+// Description:
+// Pins the attachment endpoints over HTTP: upload, listing, and download with
+// safe headers, invalid upload statuses, multipart requirements, role,
+// ownership, and state rules, storage failure mapping, and download
+// visibility.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/http/attachments.test.ts
+//
+// Test Cases:
+//     - Upload, list, and download with safe headers
+//     - Invalid uploads and documented statuses
+//     - Multipart requirements
+//     - Role, ownership, and state enforcement
+//     - Storage failures mapped to 503
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp, type TestHarness } from '../support/app.js';

@@ -1,4 +1,38 @@
+// backend/test/config.test.ts: tests of configuration loading
+//
+// Description:
+// Pins loadConfig: defaults, database URL construction, deployment overrides,
+// bootstrap failures that list every problem, and the runtime mode rules (aws
+// by default, no AWS value required in local mode, no fallback from aws to
+// local).
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/config.test.ts
+//
+// Test Cases:
+//     - Defaults and overrides
+//     - Database URL from parts with encoded credentials
+//     - Bootstrap failure on missing or invalid values
+//     - Runtime mode selection and its validation
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { describe, expect, it } from 'vitest';
 import { ConfigError, loadConfig, type AwsConfig, type LocalConfig } from '../src/common/config.js';
 

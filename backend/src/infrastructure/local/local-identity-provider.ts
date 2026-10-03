@@ -1,4 +1,27 @@
+// backend/src/infrastructure/local/local-identity-provider.ts: local demo identity adapter
+//
+// Description:
+// Identity port for the local demo mode only. It accepts exactly three fixed
+// demo bearer tokens and maps each to a fixed identity with one role.
+//
+// The tokens are non-secret development values that exist only so that the
+// demo needs no identity provider. This adapter is never selected in aws mode,
+// so demo tokens are not accepted there.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { AppError } from '../../common/errors.js';
 import type { Identity, IdentityProvider, Role } from '../../capabilities/shared/identity.js';
 

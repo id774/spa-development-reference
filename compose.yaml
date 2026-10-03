@@ -1,8 +1,26 @@
-# Local demo infrastructure: a PostgreSQL 17 database for `npm run demo`.
-# The credentials are local demo values bound to 127.0.0.1 only. They are not
-# secrets and must never be used for a shared or production database.
-# The fixed project name makes the data volume name predictable:
-# `spa-reference-demo_postgres-data`, independent of the clone directory name.
+# compose.yaml: local demo infrastructure
+#
+# Description:
+# Defines the PostgreSQL 17 database used by npm run demo. The port is bound
+# to 127.0.0.1 only and the credentials are non-production demo values; they
+# are not secrets and must never be used for a shared or production database.
+#
+# The fixed project name makes the data volume name predictable
+# (spa-reference-demo_postgres-data), independent of the clone directory name.
+#
+# Author: id774 (More info: https://id774.net)
+# Source Code: https://github.com/id774/spa-development-reference
+# License: The GPL version 3, or LGPL version 3 (Dual License).
+# Contact: idnanashi@gmail.com
+#
+# Usage:
+#     docker compose up -d
+#     docker compose down
+#     Normally driven by npm run demo.
+#
+# Requirements:
+# - Docker with Compose v2
+
 name: spa-reference-demo
 
 services:

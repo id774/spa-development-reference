@@ -1,4 +1,29 @@
+// frontend/src/features/attachments/AttachmentsPanel.tsx: attachments panel of a request
+//
+// Description:
+// Lists, uploads, and downloads the attachments of one request. The metadata
+// always comes from the attachment list endpoint, so it can be rebuilt after a
+// reload, and an upload re-fetches the list instead of trusting the upload
+// response alone.
+//
+// Upload is offered only when the caller may upload; the server still enforces
+// role, ownership, and state.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - React 19
+// - See frontend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import type { Attachment } from '@spa-ref/api-client';
 import { Button, EmptyState, LoadingIndicator, Notification, Panel, Table } from '@spa-ref/ui';
 import { useRef, useState } from 'react';

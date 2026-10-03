@@ -1,4 +1,27 @@
+// frontend/src/app/config.ts: browser runtime configuration
+//
+// Description:
+// Defines and validates the browser-safe runtime configuration served as
+// /config.json, for either the Cognito sign-in or the local demo. It contains
+// no secret.
+//
+// The application does not start with an invalid configuration; the loader
+// fails with a ConfigurationError instead.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - React 19
+// - See frontend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
 
 /** Browser-safe runtime configuration served as /config.json. It contains no secret. */
 export interface CognitoRuntimeConfig {

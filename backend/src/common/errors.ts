@@ -1,4 +1,26 @@
+// backend/src/common/errors.ts: stable application error identifiers
+//
+// Description:
+// Defines the stable application error codes with their HTTP statuses and
+// titles, and the AppError type used for expected failures.
+//
+// The detail of an AppError is shown to clients, so it must never contain
+// provider messages, SQL, stack traces, or secrets. The codes are specified in
+// doc/DETAILED_DESIGN.md.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
 
 /** Stable application error identifiers (DETAILED_DESIGN section 20). */
 export const ERROR_STATUS = {

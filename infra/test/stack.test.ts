@@ -1,4 +1,40 @@
+// infra/test/stack.test.ts: tests of the CDK stack
+//
+// Description:
+// Pins the synthesized template of ReferenceStack with CDK assertions, without
+// any AWS account.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole infrastructure suite:
+//         npm run test -w @spa-ref/infra
+//
+//     Run this file:
+//         npm run test -w @spa-ref/infra -- test/stack.test.ts
+//
+// Test Cases:
+//     - Cognito groups and public SPA client
+//     - Routing of /api/* and readiness checks
+//     - Fargate services and Aurora PostgreSQL
+//     - Private bucket and Secrets Manager credentials
+//     - Backend always in aws mode
+//     - Separate migration task
+//     - Least-privilege grants and HTTPS listener
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - AWS CDK v2
+// - See infra/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { App } from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
 import { describe, expect, it } from 'vitest';

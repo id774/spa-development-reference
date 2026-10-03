@@ -1,3 +1,24 @@
+# .github/workflows/ci.yml: GitHub Actions continuous integration workflow
+#
+# Description:
+# Verifies every pull request and every push to master. The verify job uses a
+# disposable PostgreSQL service and runs the standard checks: the lockfile
+# install, Prisma client generation, API client freshness, format, lint, type
+# check, OpenAPI validation, tests, builds, Prisma validation, migration
+# validation, and CDK synth. The containers job builds both images.
+#
+# The workflow needs no production AWS credentials, has read-only repository
+# permission, and never deploys.
+#
+# Author: id774 (More info: https://id774.net)
+# Source Code: https://github.com/id774/spa-development-reference
+# License: The GPL version 3, or LGPL version 3 (Dual License).
+# Contact: idnanashi@gmail.com
+#
+# Requirements:
+# - GitHub Actions
+# - Docker (containers job)
+
 name: CI
 
 on:

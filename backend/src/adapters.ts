@@ -1,4 +1,29 @@
+// backend/src/adapters.ts: runtime-mode selection of infrastructure adapters
+//
+// Description:
+// The single place that selects the infrastructure adapters by runtime mode.
+// In local mode it returns the file-system and recorder adapters; in aws mode
+// it creates the AWS SDK clients and returns the Cognito, S3, SES, and SNS
+// adapters.
+//
+// Application and domain code never look at the mode, and AWS SDK clients are
+// created in aws mode only.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+// - AWS SDK for JavaScript v3 clients (S3, SES v2, SNS), used in aws mode only
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { S3Client } from '@aws-sdk/client-s3';
 import { SESv2Client } from '@aws-sdk/client-sesv2';
 import { SNSClient } from '@aws-sdk/client-sns';

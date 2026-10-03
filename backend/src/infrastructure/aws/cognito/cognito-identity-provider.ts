@@ -1,4 +1,31 @@
+// backend/src/infrastructure/aws/cognito/cognito-identity-provider.ts: Amazon Cognito identity adapter
+//
+// Description:
+// Validates Cognito access tokens (signature through the user pool JWKS,
+// issuer, token use, client, and expiry), derives the application roles from
+// the cognito:groups claim, and resolves a verified email through the Cognito
+// user endpoint.
+//
+// Cognito and HTTP types stop in this adapter. Provider failures become
+// IDENTITY_PROVIDER_UNAVAILABLE and token problems become
+// AUTHENTICATION_REQUIRED; tokens are never logged.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+// - jose for JWT validation
+// - An Amazon Cognito user pool (aws mode only)
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { createPublicKey, type KeyObject } from 'node:crypto';
 import { decodeProtectedHeader, jwtVerify, type JWK } from 'jose';
 import { AppError } from '../../../common/errors.js';

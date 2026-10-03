@@ -1,4 +1,38 @@
+// backend/src/main.ts: backend process entry point
+//
+// Description:
+// Starts the backend process. It resolves configuration once from the process
+// environment, builds the logger, persistence, infrastructure adapters, and
+// capability services, creates the NestJS application, starts the outbox
+// worker, and handles SIGTERM and SIGINT by stopping the worker, the HTTP
+// server, and the database connection in that order.
+//
+// The only runtime mode switch (local or aws) is applied here through
+// createAdapters; nothing below this file reads the environment. Invalid
+// required configuration is a startup failure that writes a message to
+// standard error and exits with status 1. Configuration names and defaults are
+// documented in doc/CONFIGURATION.md.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Build / Run:
+//     npm run dev -w @spa-ref/backend
+//     npm run build -w @spa-ref/backend
+//     npm run start -w @spa-ref/backend
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+// - A reachable PostgreSQL-compatible database (see doc/CONFIGURATION.md)
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import 'reflect-metadata';
 import { createAdapters } from './adapters.js';
 import { composeServices } from './compose.js';

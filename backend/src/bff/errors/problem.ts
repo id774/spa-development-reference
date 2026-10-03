@@ -1,4 +1,28 @@
+// backend/src/bff/errors/problem.ts: Problem Details mapping and writer
+//
+// Description:
+// Maps any thrown value to a stable application error and writes it as an
+// application/problem+json response with the stable code and the trace
+// identifier.
+//
+// Unknown errors become INTERNAL_ERROR without exposing their messages. Server
+// errors are logged with a bounded, secret-free diagnostic; client errors are
+// logged at info level.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import type { Request, Response } from 'express';
 import { currentContext } from '../../common/context.js';
 import { AppError, ERROR_STATUS, ERROR_TITLE, type ErrorCode } from '../../common/errors.js';

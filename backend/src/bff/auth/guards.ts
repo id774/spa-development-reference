@@ -1,4 +1,30 @@
+// backend/src/bff/auth/guards.ts: authentication and coarse role guards
+//
+// Description:
+// Implements the first two steps of the request evaluation order. AuthGuard
+// validates the bearer access token through the identity provider, attaches
+// the derived identity to the request, and records the user and operation in
+// the request context. RolesGuard enforces the coarse role requirement
+// declared by the Roles decorator.
+//
+// The Public decorator exempts an operation from authentication. Roles are
+// always derived by the server; this file never trusts a role supplied by the
+// browser.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import {
   Inject,
   Injectable,

@@ -1,4 +1,33 @@
+// frontend/src/main.tsx: browser entry point of the SPA
+//
+// Description:
+// Bootstraps the React application in the browser. It loads and validates the
+// runtime configuration served as /config.json, then renders the application
+// inside the authentication provider and the router.
+//
+// Invalid runtime configuration stops the application with an error screen
+// instead of running half configured. The styles of the shared UI package and
+// of the application are imported here.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Build / Run:
+//     npm run dev -w @spa-ref/frontend
+//     npm run build -w @spa-ref/frontend
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - React 19
+// - See frontend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import '@spa-ref/ui/styles.css';
 import './app/app.css';
 import { ErrorMessage } from '@spa-ref/ui';

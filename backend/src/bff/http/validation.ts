@@ -1,4 +1,29 @@
+// backend/src/bff/http/validation.ts: HTTP input parsing and validation
+//
+// Description:
+// Parses identifiers, list queries, and JSON bodies into validated values
+// before any capability is called. Unknown body fields are rejected, text is
+// normalized, and limits match the OpenAPI contract.
+//
+// The JSON body is read only when a handler asks for it, after authentication
+// and role checks, so that an unauthenticated caller always receives 401
+// first.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+// - zod 4
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import express from 'express';
 import type { Request, Response } from 'express';
 import { z } from 'zod';

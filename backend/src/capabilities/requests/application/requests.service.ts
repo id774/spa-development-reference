@@ -1,4 +1,29 @@
+// backend/src/capabilities/requests/application/requests.service.ts: requests capability service
+//
+// Description:
+// Implements listing, reading, creating, updating, and submitting requests.
+// Every state change runs in one local transaction under a row lock: load,
+// ownership, version, then state.
+//
+// The audit event is committed in the same transaction as the state change,
+// and submitting also records the email and event outbox rows. Role checks are
+// repeated here because the service is the authorization boundary for the
+// capability.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { AppError } from '../../../common/errors.js';
 import {
   buildPage,

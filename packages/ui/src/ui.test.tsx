@@ -1,4 +1,40 @@
+// packages/ui/src/ui.test.tsx: tests of the UI components
+//
+// Description:
+// Pins the accessible behavior of the shared components: the shell regions, a
+// busy button, field label, hint, and error association, tables and state
+// components, dialog closing on Escape, and the text of status badges.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole UI suite:
+//         npm run test -w @spa-ref/ui
+//
+//     Run this file:
+//         npm run test -w @spa-ref/ui -- src/ui.test.tsx
+//
+// Test Cases:
+//     - Shell with navigation and account area
+//     - Busy button disabled
+//     - Field label, hint, and error association
+//     - Table, empty, loading, error, and notification
+//     - Dialog closes on Escape
+//     - Page header, panel, and status badge text
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - React 19
+// - See packages/ui/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {

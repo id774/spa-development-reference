@@ -1,4 +1,40 @@
+// backend/test/application/requests.test.ts: tests of the requests capability service
+//
+// Description:
+// Pins the request lifecycle of RequestsService on in-memory persistence:
+// creation, version increments, ownership, state and version precedence,
+// rollback of partial writes, outbox rows on submit, read visibility, and
+// role-dependent listing.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/application/requests.test.ts
+//
+// Test Cases:
+//     - Draft creation with audit event
+//     - Version and timestamp changes of update and submit
+//     - Ownership, invalid state, and stale version precedence
+//     - Atomic rollback without partial audit or outbox rows
+//     - Outbox rows only on submit
+//     - Read visibility and role-dependent listing
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { describe, expect, it } from 'vitest';
 import { AppError } from '../../src/common/errors.js';
 import { createCore } from '../support/core.js';

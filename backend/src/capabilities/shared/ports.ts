@@ -1,4 +1,27 @@
+// backend/src/capabilities/shared/ports.ts: persistence and object storage ports
+//
+// Description:
+// Defines the record types and the repository, transaction, and object-storage
+// ports used by the capability services.
+//
+// The ports are defined by application need and carry no database client or
+// AWS SDK type. Repositories return up to the requested limit, and callers
+// pass limit + 1 to detect another page.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import type { Keyset } from '../../common/cursor.js';
 import type { RequestRecord, RequestStatus } from '../requests/domain/request.js';
 

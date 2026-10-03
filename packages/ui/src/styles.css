@@ -1,4 +1,26 @@
-/* License: The GPL version 3, or LGPL version 3 (Dual License). */
+/*
+ * packages/ui/src/styles.css: design tokens and component styles of the UI package
+ *
+ * Description:
+ * The design tokens (semantic color, type, spacing, and shape names) and the
+ * styles of every component in @spa-ref/ui, including the light and dark
+ * themes. Components use the semantic tokens and never raw colors.
+ *
+ * The font family is used when it is installed locally and is never
+ * downloaded.
+ *
+ * Author: id774 (More info: https://id774.net)
+ * Source Code: https://github.com/id774/spa-development-reference
+ * License: The GPL version 3, or LGPL version 3 (Dual License).
+ * Contact: idnanashi@gmail.com
+ *
+ * Requirements:
+ * - Imported by the application entry point as @spa-ref/ui/styles.css
+ *
+ * Version History:
+ * v1.0 2026-10-03
+ *      Initial release.
+ */
 
 /* ---------------------------------------------------------------------------
    Design tokens. Semantic names only; components never use raw colors.

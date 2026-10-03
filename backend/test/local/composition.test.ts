@@ -1,4 +1,36 @@
+// backend/test/local/composition.test.ts: tests of adapter selection by runtime mode
+//
+// Description:
+// Pins createAdapters: local mode selects only local adapters and creates no
+// AWS SDK client, aws mode selects only AWS adapters, and the default mode is
+// aws.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/local/composition.test.ts
+//
+// Test Cases:
+//     - Local adapters only in local mode
+//     - AWS adapters in aws mode
+//     - aws as the default mode
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const constructed: string[] = [];

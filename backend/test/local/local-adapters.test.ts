@@ -1,4 +1,37 @@
+// backend/test/local/local-adapters.test.ts: tests of the local demo adapters
+//
+// Description:
+// Pins the local demo adapters: the three fixed demo identities, the rejection
+// of demo tokens by the AWS identity path, the file-system object storage with
+// its path-traversal refusals, and the NDJSON delivery recorders.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/local/local-adapters.test.ts
+//
+// Test Cases:
+//     - Demo token to identity mapping
+//     - Demo tokens rejected on the AWS identity path
+//     - Local object storage and unsafe key refusal
+//     - Email and event delivery records
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

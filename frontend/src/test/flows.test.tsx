@@ -1,4 +1,38 @@
+// frontend/src/test/flows.test.tsx: tests of the role workflows
+//
+// Description:
+// Pins the main user flows against the fake backend: the Requester flow from
+// draft to submission, attachment metadata rediscovery after a reload, the
+// Approver decision flow, and the Administrator lists and audit history.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole frontend suite:
+//         npm run test -w @spa-ref/frontend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/frontend -- src/test/flows.test.tsx
+//
+// Test Cases:
+//     - Requester draft, edit, attach, and submit
+//     - Attachment list rebuilt from the list endpoint
+//     - Approver approve and reject
+//     - Administrator request list and audit filter
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - React 19
+// - See frontend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

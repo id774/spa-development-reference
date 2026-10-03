@@ -1,4 +1,27 @@
+// backend/src/compose.ts: composition root of the capability services
+//
+// Description:
+// Builds the capability services (requests, approvals, attachments, audit)
+// from the persistence, identity, object-storage, clock, id, and logger
+// dependencies and returns them as AppServices.
+//
+// All current capabilities are local, in-process services. This file wires
+// them together and contains no business rules.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import type { AppServices } from './bff/app-services.js';
 import { ApprovalsService } from './capabilities/approvals/application/approvals.service.js';
 import { AttachmentsService } from './capabilities/attachments/application/attachments.service.js';

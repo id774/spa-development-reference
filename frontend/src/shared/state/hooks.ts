@@ -1,4 +1,26 @@
+// frontend/src/shared/state/hooks.ts: data loading hooks
+//
+// Description:
+// Small hooks for loading data: useResource for a value loaded on mount and
+// when its key changes, and usePagedList for a cursor-paginated list loaded
+// page by page on demand. Until a load finishes for the current key, the state
+// is loading.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - React 19
+// - See frontend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type Resource<T> =

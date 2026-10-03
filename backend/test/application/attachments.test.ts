@@ -1,4 +1,39 @@
+// backend/test/application/attachments.test.ts: tests of the attachments capability service
+//
+// Description:
+// Pins the attachment behavior of AttachmentsService with fake object storage:
+// upload to a DRAFT request without a version change, the double state check
+// around a slow transfer, storage failure mapping, orphan cleanup, listing
+// visibility, and download path consistency.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/application/attachments.test.ts
+//
+// Test Cases:
+//     - Upload metadata, storage key, and audit event
+//     - Requester, ownership, and DRAFT requirements
+//     - Submission during a slow transfer and orphan cleanup
+//     - Storage failures mapped to OBJECT_STORAGE_UNAVAILABLE
+//     - Listing, cursor binding, and download through the owning request
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { describe, expect, it } from 'vitest';
 import { createCore } from '../support/core.js';
 import { administrator, approver, otherRequester, requester } from '../support/fakes.js';

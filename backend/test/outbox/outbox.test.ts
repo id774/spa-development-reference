@@ -1,4 +1,41 @@
+// backend/test/outbox/outbox.test.ts: tests of the transactional outbox worker
+//
+// Description:
+// Pins OutboxWorker and PrismaOutboxStore against a real database with fake
+// providers: independent channels, retry schedule and permanent failure,
+// exclusive claims, recovery of stale claims with at-least-once delivery, the
+// attempt limit, graceful stop, and the fixed email content.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/outbox/outbox.test.ts
+//
+// Test Cases:
+//     - Delivery of EMAIL and EVENT rows
+//     - Independent channels; business commit kept on delivery failure
+//     - Retry schedule and permanent failure
+//     - Exclusive concurrent claims
+//     - Stale claim recovery and attempt limit
+//     - Graceful stop and email composition
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+// - A PostgreSQL-compatible test database (TEST_DATABASE_URL, default postgresql://postgres:postgres@localhost:5432/spa_test)
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { RequestsService } from '../../src/capabilities/requests/application/requests.service.js';
 import { silentLogger } from '../../src/common/logging.js';
