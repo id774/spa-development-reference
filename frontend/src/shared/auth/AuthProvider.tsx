@@ -1,4 +1,31 @@
+// frontend/src/shared/auth/AuthProvider.tsx: authentication state provider
+//
+// Description:
+// Owns the authentication state of the SPA and exposes it through useAuth: the
+// in-memory token store, the API client, and the UI roles.
+//
+// For Cognito it runs the Authorization Code flow with PKCE, validates the
+// state of the callback, exchanges the code, refreshes tokens before expiry,
+// and signs out. For the local demo it continues as one of the fixed demo
+// identities. In both modes the roles come from GET /api/session, never from
+// decoded token claims, and are discarded with the tokens on sign-out, refresh
+// failure, or a 401.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - React 19
+// - See frontend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import {
   createApiClient,
   type ApiClient,

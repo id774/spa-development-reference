@@ -1,6 +1,29 @@
 #!/bin/sh
+# frontend/nginx/40-runtime-config.sh: runtime configuration rendering at container start-up
+#
+# Description:
+# Renders the browser-safe runtime configuration /config.json from the
+# template using the container environment. It runs as part of the nginx
+# entrypoint.
+#
+# A missing required value fails the start-up instead of serving a half
+# configured application, and nothing secret is rendered.
+#
+# Author: id774 (More info: https://id774.net)
+# Source Code: https://github.com/id774/spa-development-reference
 # License: The GPL version 3, or LGPL version 3 (Dual License).
-# Renders the browser-safe runtime configuration. A missing value fails the start-up.
+# Contact: idnanashi@gmail.com
+#
+# Usage:
+#     Run by the nginx image entrypoint (/docker-entrypoint.d); not run by hand.
+#
+# Requirements:
+# - POSIX sh and envsubst (provided by the nginx image)
+#
+# Version History:
+# v1.0 2026-10-03
+#      Initial release.
+
 set -eu
 : "${COGNITO_CLIENT_ID:?COGNITO_CLIENT_ID is required}"
 : "${COGNITO_AUTHORIZATION_ENDPOINT:?COGNITO_AUTHORIZATION_ENDPOINT is required}"

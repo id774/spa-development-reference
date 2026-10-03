@@ -1,4 +1,23 @@
-/* License: The GPL version 3, or LGPL version 3 (Dual License). */
+/*
+ * frontend/src/app/app.css: application-specific styles
+ *
+ * Description:
+ * Styles of the screens owned by the SPA: the signed-out and sign-in screens,
+ * request detail, attachments, and the audit filter. Reusable component styles
+ * and design tokens live in packages/ui and are not duplicated here.
+ *
+ * Author: id774 (More info: https://id774.net)
+ * Source Code: https://github.com/id774/spa-development-reference
+ * License: The GPL version 3, or LGPL version 3 (Dual License).
+ * Contact: idnanashi@gmail.com
+ *
+ * Requirements:
+ * - Imported by frontend/src/main.tsx and bundled by Vite
+ *
+ * Version History:
+ * v1.0 2026-10-03
+ *      Initial release.
+ */
 
 /* Signed-out / sign-in screens */
 .auth-screen {

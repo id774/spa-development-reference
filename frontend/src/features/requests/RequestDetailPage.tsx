@@ -1,4 +1,29 @@
+// frontend/src/features/requests/RequestDetailPage.tsx: request detail and review screen
+//
+// Description:
+// Request Detail for a Requester or Administrator and Request Review for an
+// Approver. The request and its attachments are loaded from GET endpoints, so
+// the screen can always be rebuilt after a reload.
+//
+// It offers edit and submit to the owning Requester and approve and reject
+// with a comment to an Approver, always sending the version it displayed so
+// that conflicts are reported by the server.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - React 19
+// - See frontend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import type { ApiRequest } from '@spa-ref/api-client';
 import {
   Button,

@@ -1,7 +1,37 @@
+// scripts/demo.mjs: local demo orchestrator
+//
+// Description:
+// Runs the fully local demonstration. It is cross-platform and uses Node.js
+// built-ins only. It checks the prerequisites, starts PostgreSQL through
+// Docker Compose, applies the migrations, and starts the backend and the
+// frontend, then waits until the backend is ready and prints the address to
+// open. Everything binds to 127.0.0.1.
+//
+// It needs no AWS account, credential, or .env file. If either application
+// process dies after startup the other one is stopped. The down command keeps
+// the data; reset removes the database volume and the local attachment and
+// delivery files.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
-// Local demo orchestration: `node scripts/demo.mjs <run|setup|backend|down|reset>`.
-// Cross-platform (Node built-ins only). It needs Docker for the local PostgreSQL
-// and no cloud account, credential, or .env file. Everything is bound to 127.0.0.1.
+// Contact: idnanashi@gmail.com
+//
+// Usage:
+//     npm run demo
+//     npm run demo:setup
+//     npm run demo:backend
+//     npm run demo:down
+//     npm run demo:reset
+//
+// Requirements:
+// - Node.js 24.x
+// - Docker with Compose v2
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { spawn, spawnSync } from 'node:child_process';
 import { rm } from 'node:fs/promises';
 import { createServer } from 'node:net';

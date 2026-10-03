@@ -1,4 +1,24 @@
+// backend/src/capabilities/shared/identity.ts: application identity and role model
+//
+// Description:
+// Defines the three application roles, the identity the BFF derives from a
+// validated access token, the role helpers, and the identity provider port.
+//
+// Provider-specific types stop inside the adapters that implement the port.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
 
 export const ROLES = ['Requester', 'Approver', 'Administrator'] as const;
 export type Role = (typeof ROLES)[number];

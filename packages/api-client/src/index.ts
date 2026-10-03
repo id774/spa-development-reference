@@ -1,4 +1,30 @@
+// packages/api-client/src/index.ts: typed browser API client
+//
+// Description:
+// The browser API client for the BFF contract. It re-exports the public types
+// derived from the generated OpenAPI schema, and createApiClient wraps fetch
+// with the bearer token, JSON handling, list queries built from limit and
+// cursor, attachment upload and download, and a single notification when the
+// server answers 401.
+//
+// Every non-2xx response becomes an ApiError that carries the Problem Details
+// body when there is one. The generated schema is produced by the owning
+// generator from openapi/openapi.yaml and is not edited by hand.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See packages/api-client/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import type { components } from './generated/schema.js';
 
 export type { components, paths } from './generated/schema.js';

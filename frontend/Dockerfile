@@ -1,5 +1,29 @@
+# frontend/Dockerfile: container image of the frontend
+#
+# Description:
+# Builds the SPA and serves it with an unprivileged nginx image. The runtime
+# configuration is rendered at start-up by frontend/nginx/40-runtime-config.sh
+# as the non-root user, so one image serves every environment.
+#
+# The build context is the repository root. The container listens on port
+# 8080.
+#
+# Author: id774 (More info: https://id774.net)
+# Source Code: https://github.com/id774/spa-development-reference
 # License: The GPL version 3, or LGPL version 3 (Dual License).
-# Build context: the repository root.
+# Contact: idnanashi@gmail.com
+#
+# Build / Run:
+#     docker build -f frontend/Dockerfile .
+#
+# Requirements:
+# - Docker
+# - Build context: the repository root
+#
+# Version History:
+# v1.0 2026-10-03
+#      Initial release.
+
 FROM node:24-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json tsconfig.base.json ./

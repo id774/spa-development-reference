@@ -1,4 +1,32 @@
+// infra/lib/reference-stack.ts: AWS infrastructure stack of the reference application
+//
+// Description:
+// Defines the AWS deployment of the current reference: the VPC, Cognito user
+// pool with its groups and public SPA client, Aurora PostgreSQL with
+// credentials in Secrets Manager, the private attachment bucket, the SNS
+// topic, the Fargate services of the frontend and backend, a one-off migration
+// task, and the application load balancer that routes /api/* to the backend
+// and everything else to the SPA.
+//
+// Task roles follow least privilege, the backend always runs in aws mode, and
+// normal startup never migrates. Nothing here deploys itself.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - AWS CDK v2
+// - See infra/package.json for workspace dependencies
+// - AWS CDK v2
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { Duration, RemovalPolicy, Stack, type StackProps, CfnOutput } from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';

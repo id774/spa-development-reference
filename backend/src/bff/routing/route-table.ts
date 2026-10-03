@@ -1,4 +1,28 @@
+// backend/src/bff/routing/route-table.ts: browser-facing route table middleware
+//
+// Description:
+// Declares the browser-facing routes and the methods each supports. It runs
+// before authentication so that an unknown path is answered with 404
+// ROUTE_NOT_FOUND and a known path with an unsupported method with 405
+// METHOD_NOT_ALLOWED and an Allow header.
+//
+// The authoritative contract is openapi/openapi.yaml; this table must stay
+// consistent with it.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../../common/errors.js';
 

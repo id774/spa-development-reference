@@ -1,4 +1,29 @@
+// backend/src/capabilities/attachments/application/attachments.service.ts: attachments capability service
+//
+// Description:
+// Implements listing, uploading, and downloading attachments. Upload is
+// limited to the owning Requester of a DRAFT request, and the state is checked
+// before the object transfer and again, under a row lock, when the metadata
+// and audit event are committed.
+//
+// If the metadata transaction fails after the object was written, the orphan
+// object is deleted on a best-effort basis. Storage failures become
+// OBJECT_STORAGE_UNAVAILABLE without exposing provider details.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { AppError } from '../../../common/errors.js';
 import {
   buildPage,

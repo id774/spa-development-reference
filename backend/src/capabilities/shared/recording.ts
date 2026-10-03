@@ -1,4 +1,27 @@
+// backend/src/capabilities/shared/recording.ts: audit and notification recording helpers
+//
+// Description:
+// Writes an audit event and the EMAIL and EVENT outbox rows inside the
+// caller's transaction, so that the business state change, its audit event,
+// and its delivery intent commit or fail together.
+//
+// The email recipient is the address captured on the request at creation, and
+// the outbox payloads carry only the fields the delivery needs.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import type { IdGenerator } from '../../common/ports.js';
 import type { RequestRecord, RequestStatus } from '../requests/domain/request.js';
 import type { AuditEventType, OutboxEventType, OutboxRow, Repositories } from './ports.js';

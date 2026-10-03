@@ -1,4 +1,30 @@
+// backend/src/infrastructure/persistence/prisma-outbox-store.ts: Prisma outbox store
+//
+// Description:
+// Implements the outbox persistence port. Raw SQL is limited to this class and
+// always uses bound parameters. Rows are claimed with FOR UPDATE SKIP LOCKED
+// so that several backend tasks claim distinct rows, and results are recorded
+// only while the row is still processing under the same claim token.
+//
+// Expired claims are re-queued, or failed at the attempt limit. Delivery is
+// at-least-once.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+// - Prisma 7.10.0
+// - PostgreSQL-compatible database
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import type { PrismaClient } from '../../generated/prisma/client.js';
 import type { OutboxChannel, OutboxEventType } from '../../capabilities/shared/ports.js';
 import type { ClaimedDelivery, OutboxStore } from '../../outbox/ports.js';

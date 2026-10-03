@@ -1,4 +1,37 @@
+// backend/test/application/attachment-rules.test.ts: tests of the attachment validation rules
+//
+// Description:
+// Pins the pure upload rules: accepted media types, content signature and
+// extension agreement, empty files, file name validation, and the
+// Content-Disposition fallback.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/application/attachment-rules.test.ts
+//
+// Test Cases:
+//     - Supported media types accepted
+//     - Unsupported type, signature mismatch, and extension mismatch rejected
+//     - Zero-byte and invalid file names rejected
+//     - Attachment-only Content-Disposition with a safe fallback
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { describe, expect, it } from 'vitest';
 import {
   contentDisposition,

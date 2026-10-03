@@ -1,4 +1,32 @@
+// infra/bin/infra.ts: AWS CDK application entry point
+//
+// Description:
+// Bootstraps the CDK application and instantiates the ReferenceStack. All
+// deployment inputs are CDK context values and none of them is a secret;
+// placeholder defaults keep cdk synth runnable without an AWS account.
+//
+// The account and region come from the CDK environment variables, and the
+// region defaults to ap-northeast-1. Deployment itself is outside the standard
+// CI.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Build / Run:
+//     npm run synth -w @spa-ref/infra
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - AWS CDK v2
+// - See infra/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { App } from 'aws-cdk-lib';
 import { ReferenceStack } from '../lib/reference-stack.js';
 

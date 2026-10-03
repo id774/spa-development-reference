@@ -1,4 +1,24 @@
+// backend/src/capabilities/audit/application/audit.service.ts: audit capability service
+//
+// Description:
+// Lists audit events for the Administrator role with keyset pagination. The
+// cursor is bound to the optional request identifier filter, so a cursor
+// cannot be reused with a different filter.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { AppError } from '../../../common/errors.js';
 import {
   buildPage,

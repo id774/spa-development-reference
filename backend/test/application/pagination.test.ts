@@ -1,4 +1,37 @@
+// backend/test/application/pagination.test.ts: tests of keyset pagination
+//
+// Description:
+// Pins the opaque cursor behavior of the list operations: ordering, cursor
+// round trip, the last page, and rejection of a cursor used on another
+// endpoint, request, or filter.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/application/pagination.test.ts
+//
+// Test Cases:
+//     - Ordering and cursor round trip
+//     - No next cursor on the last page
+//     - Cursor binding to endpoint, request, and filter
+//     - Audit events listed newest first
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { describe, expect, it } from 'vitest';
 import { decodeCursor, encodeCursor } from '../../src/common/cursor.js';
 import { createCore } from '../support/core.js';

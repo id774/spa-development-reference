@@ -1,4 +1,41 @@
+// backend/test/http/api.test.ts: tests of the browser-facing HTTP API
+//
+// Description:
+// Pins the HTTP behavior of the real NestJS application on test doubles of the
+// ports: routing, the evaluation order (authentication, role, structure,
+// lookup, authorization, version, state), request body rules, the session
+// endpoint, the authorization matrix, the workflow, list parameters, and
+// health. Responses are checked against the OpenAPI contract.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/http/api.test.ts
+//
+// Test Cases:
+//     - Routing errors before authentication
+//     - Evaluation order of failures
+//     - Request body validation and normalization
+//     - Session roles and the authorization matrix
+//     - Workflow responses and pagination
+//     - Health endpoints
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import request from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { expectContract } from '../support/contract.js';

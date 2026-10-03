@@ -1,4 +1,26 @@
+// backend/src/infrastructure/aws/s3/s3-object-storage.ts: Amazon S3 object storage adapter
+//
+// Description:
+// Implements the object-storage port with Amazon S3. SDK types stop here, and
+// storage failures are translated into application errors without exposing
+// provider messages.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+// - @aws-sdk/client-s3
+// - An S3 bucket (aws mode only)
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import {
   DeleteObjectCommand,
   GetObjectCommand,

@@ -1,4 +1,40 @@
+// backend/test/db/persistence.test.ts: tests of PostgreSQL persistence
+//
+// Description:
+// Pins the real database behavior of PrismaPersistence: transactions, rollback
+// of state, audit, and outbox together, serialization of concurrent decisions,
+// schema constraints, deterministic keyset pagination, and the attachment
+// state re-check.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/db/persistence.test.ts
+//
+// Test Cases:
+//     - Readiness and the whole workflow on real transactions
+//     - Atomic rollback of state, audit, and outbox rows
+//     - Concurrent decisions: exactly one terminal approval
+//     - Schema constraints and invalid values
+//     - Deterministic keyset pagination
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+// - A PostgreSQL-compatible test database (TEST_DATABASE_URL, default postgresql://postgres:postgres@localhost:5432/spa_test)
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { ApprovalsService } from '../../src/capabilities/approvals/application/approvals.service.js';
 import { AttachmentsService } from '../../src/capabilities/attachments/application/attachments.service.js';

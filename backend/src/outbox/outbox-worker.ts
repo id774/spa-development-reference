@@ -1,4 +1,30 @@
+// backend/src/outbox/outbox-worker.ts: transactional outbox worker
+//
+// Description:
+// Polls for due outbox rows, claims them, and delivers them by email or event
+// publication. Provider calls happen outside any database transaction and are
+// bounded by a timeout.
+//
+// Delivery is at-least-once: a provider call that succeeded just before a
+// crash is repeated after the claim lease expires. Retry delays, the attempt
+// limit, and the lease are settings; their semantics are specified in
+// doc/DETAILED_DESIGN.md. Emails contain the request identifier, title, and
+// status only.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { describeError, type AppLogger } from '../common/logging.js';
 import type { Clock, IdGenerator } from '../common/ports.js';
 import type { OutboxEventType } from '../capabilities/shared/ports.js';

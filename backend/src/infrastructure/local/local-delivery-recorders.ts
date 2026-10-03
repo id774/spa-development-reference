@@ -1,4 +1,26 @@
+// backend/src/infrastructure/local/local-delivery-recorders.ts: local demo mail and event recorders
+//
+// Description:
+// Records each email and each published event as one NDJSON line under
+// <dataDir>/deliveries (local demo mode only), instead of calling SES or SNS.
+//
+// The records are read back by scripts/demo-deliveries.mjs. The outbox still
+// runs in local mode; only the external providers are replaced.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { appendFile, mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import type { EventMessage, EventPublisher, MailMessage, MailSender } from '../../outbox/ports.js';

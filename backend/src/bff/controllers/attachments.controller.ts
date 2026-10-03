@@ -1,4 +1,30 @@
+// backend/src/bff/controllers/attachments.controller.ts: attachment endpoint controller
+//
+// Description:
+// Maps the attachment endpoints (list, upload, download) onto the attachments
+// capability. It receives one multipart file in memory within the configured
+// size limit, validates it with the domain upload rules, and streams
+// downloads.
+//
+// Downloads always carry Content-Disposition: attachment,
+// X-Content-Type-Options: nosniff, and Cache-Control: private, no-store. The
+// multipart file name is display metadata only and never a storage path.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+// - multer for multipart parsing
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { Controller, Get, Inject, Param, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import multer from 'multer';

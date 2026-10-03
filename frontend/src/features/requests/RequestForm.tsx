@@ -1,4 +1,25 @@
+// frontend/src/features/requests/RequestForm.tsx: request title and description form
+//
+// Description:
+// The shared form for creating and editing a draft. It applies the same
+// constraints as the API (title 1 to 200 characters, description up to 5000)
+// before calling it, and reports validation messages next to the fields.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - React 19
+// - See frontend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { Button, TextAreaField, TextField } from '@spa-ref/ui';
 import { useState, type FormEvent } from 'react';
 

@@ -1,4 +1,22 @@
+// eslint.config.js: repository-wide ESLint configuration
+//
+// Description:
+// The flat ESLint configuration for every workspace. It ignores dependencies,
+// build output, and the generated Prisma client and API schema, applies the
+// recommended JavaScript and TypeScript rules with unused-value and inline
+// type import checks, and enables the React hooks rules for the frontend and
+// UI packages.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - ESLint 10
+// - See package.json for lint dependencies
+
 import js from '@eslint/js';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';

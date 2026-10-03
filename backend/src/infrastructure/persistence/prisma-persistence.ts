@@ -1,4 +1,29 @@
+// backend/src/infrastructure/persistence/prisma-persistence.ts: Prisma persistence adapter
+//
+// Description:
+// Implements the persistence port on PostgreSQL through Prisma: the
+// repositories, keyset-paginated queries, the row lock used by state
+// transitions, the local transaction boundary, and the readiness probe.
+//
+// Prisma types stop here. Keyset predicates order by the sort field and then
+// by id so that pagination is stable.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+// - Prisma 7.10.0
+// - PostgreSQL-compatible database
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { PrismaPg } from '@prisma/adapter-pg';
 import type { Keyset } from '../../common/cursor.js';
 import { PrismaClient, type Prisma } from '../../generated/prisma/client.js';

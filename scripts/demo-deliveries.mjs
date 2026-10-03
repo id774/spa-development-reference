@@ -1,6 +1,26 @@
+// scripts/demo-deliveries.mjs: local demo delivery record reader
+//
+// Description:
+// Prints, using Node.js built-ins only, the email and event records that the
+// local demo backend wrote as NDJSON under .local/deliveries, in a
+// human-readable form. Having no record yet is a normal state, not an error; a
+// line that is not valid JSON is reported with the file and line number.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
-// Shows the mail and event records written by the local demo backend:
-// `npm run demo:deliveries`. Node built-ins only.
+// Contact: idnanashi@gmail.com
+//
+// Usage:
+//     npm run demo:deliveries
+//
+// Requirements:
+// - Node.js 24 or later
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { readFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

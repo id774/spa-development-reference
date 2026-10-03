@@ -1,4 +1,38 @@
+// backend/test/application/approvals.test.ts: tests of the approvals capability service
+//
+// Description:
+// Pins the approval workflow of ApprovalsService on in-memory persistence: a
+// decision is one transaction that updates the request, writes the approval
+// row, the audit event, and the outbox rows; only one terminal decision is
+// possible; and the Approver role and a SUBMITTED request are required.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/application/approvals.test.ts
+//
+// Test Cases:
+//     - Approve and reject transitions with audit and approval records
+//     - Single terminal decision per request
+//     - Role and state requirements
+//     - Approval queue ordering (oldest submission first)
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { describe, expect, it } from 'vitest';
 import { createCore, type Core } from '../support/core.js';
 import { administrator, approver, requester } from '../support/fakes.js';

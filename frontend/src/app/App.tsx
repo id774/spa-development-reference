@@ -1,4 +1,28 @@
+// frontend/src/app/App.tsx: application routes and screens
+//
+// Description:
+// Declares the route structure of the SPA, the signed-out and sign-in screens,
+// the OAuth callback route, and the navigation shell.
+//
+// Route protection and role gates here are presentation only: a protected
+// route needs an in-memory session, and a reload lands on the signed-out
+// screen. The backend remains the authorization authority.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - React 19
+// - See frontend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import type { SessionRole } from '@spa-ref/api-client';
 import {
   AppShell,

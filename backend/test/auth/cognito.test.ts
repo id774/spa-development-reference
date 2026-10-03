@@ -1,4 +1,39 @@
+// backend/test/auth/cognito.test.ts: tests of Cognito access token validation
+//
+// Description:
+// Pins CognitoIdentityProvider against locally generated signing keys and a
+// fake JWKS and user endpoint: token claims, group-to-role mapping, clock
+// skew, key refresh and caching, unsupported algorithms, and verified email
+// lookup. No real Cognito service is used.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/auth/cognito.test.ts
+//
+// Test Cases:
+//     - Valid tokens and group-to-role mapping
+//     - Rejection of invalid claims, signatures, and algorithms
+//     - Clock skew tolerance
+//     - JWKS refresh, caching, and outage behavior
+//     - Verified email lookup and failure mapping
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { SignJWT, exportJWK, generateKeyPair, type JWK } from 'jose';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CognitoIdentityProvider } from '../../src/infrastructure/aws/cognito/cognito-identity-provider.js';

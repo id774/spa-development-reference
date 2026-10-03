@@ -1,3 +1,27 @@
+# openapi/openapi.yaml: browser-facing HTTP contract
+#
+# Description:
+# The normative OpenAPI 3.1 contract of the browser-facing HTTP API and the
+# single source of truth for its paths, schemas, and errors. It defines the
+# server-derived authentication and authorization contract and the evaluation
+# order of failures.
+#
+# The header version below is the version of this file's header documentation.
+# The API version is the info.version field and is independent of it.
+#
+# Author: id774 (More info: https://id774.net)
+# Source Code: https://github.com/id774/spa-development-reference
+# License: The GPL version 3, or LGPL version 3 (Dual License).
+# Contact: idnanashi@gmail.com
+#
+# Requirements:
+# - OpenAPI 3.1
+# - Validated with Redocly CLI (npm run openapi:lint)
+#
+# Version History:
+# v1.0 2026-10-03
+#      Initial release.
+
 openapi: 3.1.0
 info:
   title: SPA Development Reference API

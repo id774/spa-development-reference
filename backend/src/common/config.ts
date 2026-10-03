@@ -1,4 +1,32 @@
+// backend/src/common/config.ts: typed configuration loader
+//
+// Description:
+// Resolves the process environment once into typed, validated configuration
+// for the local or aws mode. Missing or invalid required values fail bootstrap
+// with a ConfigError; AWS settings are required in aws mode only and never
+// fall back to local mode.
+//
+// Domain and application code receive this typed configuration and never read
+// the environment. The settings and defaults are documented in
+// doc/CONFIGURATION.md.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Environment Variables:
+//     See doc/CONFIGURATION.md and .env.example for every setting.
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { z } from 'zod';
 
 export const CAPABILITY_NAMES = ['requests', 'approvals', 'attachments', 'audit'] as const;

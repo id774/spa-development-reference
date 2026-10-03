@@ -1,4 +1,37 @@
+// backend/test/logging.test.ts: tests of structured logging
+//
+// Description:
+// Pins the structured logger: the JSON fields, level distinctions, redaction
+// of tokens and secrets from structured fields, and the removal and bounding
+// of bearer tokens and JWTs in described errors.
+//
+// Author: id774 (More info: https://id774.net)
+// Source Code: https://github.com/id774/spa-development-reference
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+// Contact: idnanashi@gmail.com
+//
+// Running the tests:
+//     Run the whole backend suite:
+//         npm run test -w @spa-ref/backend
+//
+//     Run this file:
+//         npm run test -w @spa-ref/backend -- test/logging.test.ts
+//
+// Test Cases:
+//     - JSON line fields
+//     - Level distinctions
+//     - Redaction of secrets in fields
+//     - Sanitized and bounded error descriptions
+//
+// Requirements:
+// - Node.js 24 or later
+// - TypeScript 5.9.3
+// - See backend/package.json for workspace dependencies
+//
+// Version History:
+// v1.0 2026-10-03
+//      Initial release.
+
 import { Writable } from 'node:stream';
 import { describe, expect, it } from 'vitest';
 import { runWithContext } from '../src/common/context.js';
