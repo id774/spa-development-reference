@@ -6,7 +6,7 @@ import {
   type SessionRole,
 } from '@spa-ref/api-client';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import type { RuntimeConfig } from '../../app/config.js';
+import type { CognitoRuntimeConfig, RuntimeConfig } from '../../app/config.js';
 import {
   AuthError,
   authorizationUrl,
@@ -17,6 +17,7 @@ import {
   transaction,
   type TransactionStorage,
 } from './oauth.js';
+import { LOCAL_DEMO_TOKENS } from './local-demo.js';
 import { codeChallenge, randomString } from './pkce.js';
 import { TokenStore } from './token-store.js';
 
@@ -39,6 +40,10 @@ export interface AuthContextValue {
   /** UI role state from GET /api/session. Presentation only; the server authorizes. */
   roles: readonly SessionRole[];
   api: ApiClient;
+  /** `local` is the no-external-service demo; `cognito` is the Amazon Cognito flow. */
+  authMode: RuntimeConfig['authMode'];
+  /** Local demo only: continues as one of the fixed demo identities. */
+  signInLocal(role: SessionRole): Promise<void>;
   signIn(returnPath?: string): Promise<void>;
   /** Completes the authorization code flow and returns the path to continue at. */
   completeSignIn(search: URLSearchParams): Promise<string>;
@@ -48,6 +53,11 @@ export interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const REFRESH_MARGIN_MS = 60_000;
+
+function requireCognito(config: RuntimeConfig): CognitoRuntimeConfig {
+  if (config.authMode !== 'cognito') throw new AuthError('Cognito sign-in is not enabled.');
+  return config;
+}
 
 export function AuthProvider({
   config,
@@ -94,7 +104,7 @@ export function AuthProvider({
     const current = tokens.get();
     if (current?.refreshToken == null) return;
     try {
-      const next = await refreshTokens(config, doFetch, current.refreshToken, now);
+      const next = await refreshTokens(requireCognito(config), doFetch, current.refreshToken, now);
       tokens.set(next);
       const fresh = await fetchSession(next.accessToken);
       if (fresh === null) clearSession();
@@ -123,6 +133,7 @@ export function AuthProvider({
 
   const signIn = useCallback(
     async (returnPath = '/') => {
+      const cognito = requireCognito(config);
       const verifier = randomString(48);
       const state = randomString(24);
       transaction.save(browser.transactionStorage, {
@@ -131,7 +142,7 @@ export function AuthProvider({
         returnPath: safeReturnPath(returnPath),
       });
       browser.redirect(
-        authorizationUrl(config, { state, challenge: await codeChallenge(verifier) }),
+        authorizationUrl(cognito, { state, challenge: await codeChallenge(verifier) }),
       );
     },
     [browser, config],
@@ -139,6 +150,7 @@ export function AuthProvider({
 
   const completeSignIn = useCallback(
     async (search: URLSearchParams): Promise<string> => {
+      const cognito = requireCognito(config);
       const saved = transaction.load(browser.transactionStorage);
       // The transaction state is single use, whatever the outcome.
       transaction.clear(browser.transactionStorage);
@@ -149,7 +161,7 @@ export function AuthProvider({
       if (saved === null || search.get('state') !== saved.state) {
         throw new AuthError('The sign-in response did not match the request.');
       }
-      const issued = await exchangeCode(config, doFetch, { code, verifier: saved.verifier }, now);
+      const issued = await exchangeCode(cognito, doFetch, { code, verifier: saved.verifier }, now);
       const loaded = await fetchSession(issued.accessToken);
       if (loaded === null) throw new AuthError('The session could not be established.');
       tokens.set(issued);
@@ -160,9 +172,24 @@ export function AuthProvider({
     [browser, config, doFetch, fetchSession, now, tokens],
   );
 
+  const signInLocal = useCallback(
+    async (role: SessionRole) => {
+      if (config.authMode !== 'local') throw new AuthError('Local sign-in is not enabled.');
+      const accessToken = LOCAL_DEMO_TOKENS[role];
+      const loaded = await fetchSession(accessToken);
+      if (loaded === null) throw new AuthError('The session could not be established.');
+      // The roles come from GET /api/session, not from the selected button.
+      tokens.set({ accessToken, refreshToken: null, expiresAt: Number.MAX_SAFE_INTEGER });
+      setSession(loaded);
+      setStatus('signed-in');
+    },
+    [config, fetchSession, tokens],
+  );
+
   const signOut = useCallback(() => {
     // State is cleared before the browser leaves for the identity provider.
     clearSession();
+    if (config.authMode === 'local') return;
     transaction.clear(browser.transactionStorage);
     browser.redirect(logoutUrl(config));
   }, [browser, clearSession, config]);
@@ -173,11 +200,13 @@ export function AuthProvider({
       session,
       roles: session?.roles ?? [],
       api,
+      authMode: config.authMode,
+      signInLocal,
       signIn,
       completeSignIn,
       signOut,
     }),
-    [api, completeSignIn, session, signIn, signOut, status],
+    [api, completeSignIn, config.authMode, session, signIn, signInLocal, signOut, status],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

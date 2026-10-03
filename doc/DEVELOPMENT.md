@@ -5,8 +5,9 @@ The development workflow reference: how to run the application locally and how t
 ## 1. Prerequisites
 
 - **Node.js 24** and npm (the root `package.json` requires `node >=24`; `.nvmrc` selects 24).
-- **A PostgreSQL-compatible database** for the backend and for the backend tests. The repository ships no Docker Compose file or emulator; use any PostgreSQL you can reach. Docker is not required to develop.
-- **For a full local sign-in**: a Cognito user pool, plus AWS access (S3, SES, SNS) when you exercise attachments or notifications. The automated tests need none of these; they use test doubles and a local PostgreSQL.
+- **A PostgreSQL-compatible database** for the backend and for the backend tests. For the local demo, `compose.yaml` provides PostgreSQL 17 (`npm run demo`; Docker with Compose is required for that path). For development and tests, any PostgreSQL you can reach works; Docker is not otherwise required.
+- **For the local demo**: nothing beyond Docker. `npm run demo` runs the backend with `APP_MODE=local` and the frontend together; `npm run demo:setup` prepares only the database and migrations, `npm run demo:backend` runs only the backend, `npm run demo:down` stops PostgreSQL, and `npm run demo:reset` removes the demo data. See [`GETTING_STARTED.md`](GETTING_STARTED.md), section 4.
+- **For a sign-in against real AWS services**: a Cognito user pool, plus AWS access (S3, SES, SNS) when you exercise attachments or notifications. The automated tests need none of these; they use test doubles and a local PostgreSQL.
 
 ## 2. Install
 
@@ -75,7 +76,7 @@ To run the compiled backend instead: `npm run build -w @spa-ref/backend`, then `
 npm run dev -w @spa-ref/frontend
 ```
 
-Vite serves the SPA (by default at `http://localhost:5173`) and proxies `/api` to `http://localhost:3000`, so the browser sees the same path shape as in production. The browser reads its runtime configuration from `/config.json`; in development that is `frontend/public/config.json`, which holds placeholder values. To sign in locally, point it at a real Cognito app client (callback URL `http://localhost:5173/auth/callback`, sign-out URL `http://localhost:5173/signed-out`) and run the backend with the matching `COGNITO_*` values. See [`CONFIGURATION.md`](CONFIGURATION.md), section 2.
+Vite serves the SPA (by default at `http://localhost:5173`) and proxies `/api` to the backend on port 3000, so the browser sees the same path shape as in production. The browser reads its runtime configuration from `/config.json`; in development that is `frontend/public/config.json`, which selects the local demo (`authMode: "local"`). To sign in with Cognito instead, point it at a real Cognito app client (callback URL `http://localhost:5173/auth/callback`, sign-out URL `http://localhost:5173/signed-out`) and run the backend with the matching `COGNITO_*` values. See [`CONFIGURATION.md`](CONFIGURATION.md), section 2.
 
 What the screens do for each role is described in [`USER_GUIDE.md`](USER_GUIDE.md).
 

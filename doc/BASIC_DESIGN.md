@@ -163,6 +163,28 @@ BFF.
 The backend is the only application component that connects to Aurora, S3,
 SES, or SNS.
 
+### 4.1 Local demo topology
+
+The local demonstration (REQUIREMENTS section 20.1) is a second, non-deployed
+topology on one machine:
+
+```text
+Browser --> Vite dev server (SPA, proxies /api) --> backend (APP_MODE=local)
+                                                       |-- PostgreSQL (container)
+                                                       |-- local files: attachments
+                                                       '-- local files: email and event records
+```
+
+It differs from the AWS topology only at the external adapters. The same
+domain and application code, HTTP API, database model, transactional outbox,
+and authorization run in both. The adapter set is selected once at bootstrap by
+the explicit `APP_MODE` value (`aws` by default, or `local`); no business code
+branches on it. In `local` mode the identity adapter maps three fixed demo
+tokens to the three roles, object storage is a local directory, and the email
+and event adapters append records to local files. No AWS client is created in
+`local` mode, and the AWS deployment never accepts the demo tokens. The
+local topology is not a supported deployment.
+
 ## 5. Frontend architecture
 
 The frontend is a React and TypeScript SPA organized by application feature

@@ -369,6 +369,12 @@ instruction.
 
 Do not create a second normative specification inside an AI-agent prompt.
 
+The first runnable path for a person who has just cloned the repository shall
+not depend on cloud accounts or external services. Provide a fully local
+demonstration that reuses the real application logic and replaces only external
+infrastructure adapters by explicit configuration, and state it first in the
+README.
+
 ### 10.1 Delegated implementation detail
 
 The initial implementation task may delegate details such as:

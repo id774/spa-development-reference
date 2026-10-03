@@ -24,7 +24,14 @@ export interface ReferenceStackProps extends StackProps {
 }
 
 const REPOSITORY_ROOT = fileURLToPath(new URL('../../', import.meta.url));
-const ASSET_EXCLUDES = ['**/node_modules', '**/dist', '**/cdk.out', '.git', '**/coverage'];
+const ASSET_EXCLUDES = [
+  '**/node_modules',
+  '**/dist',
+  '**/cdk.out',
+  '.git',
+  '**/coverage',
+  '.local',
+];
 
 /**
  * The AWS deployment of the current reference: ALB, ECS/Fargate (frontend and
@@ -154,6 +161,7 @@ export class ReferenceStack extends Stack {
       exclude: ASSET_EXCLUDES,
     });
     const backendEnvironment = {
+      APP_MODE: 'aws',
       PORT: '3000',
       AWS_REGION: region,
       COGNITO_ISSUER: issuer,

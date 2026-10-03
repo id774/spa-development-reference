@@ -155,6 +155,15 @@ normalized.
   application infrastructure errors.
 - No second-cloud implementation is added to the current code.
 
+## 11.1 Local first run
+
+The first runnable path of the repository is the fully local demonstration
+(`npm run demo`). A change shall not make that path depend on an AWS account,
+an external identity provider, or an edited environment file. Local adapters
+replace only external infrastructure adapters, are selected by the explicit
+`APP_MODE` value, and shall never be reachable from the `aws` mode. Demo tokens
+and credentials are non-secret, loopback-only values documented as such.
+
 ## 12. Logging and audit
 
 - Structured operational logging and persisted business audit are separate.

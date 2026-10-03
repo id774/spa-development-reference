@@ -578,6 +578,26 @@ them.
 The repository does not currently promise an equivalent deployed implementation
 for another cloud provider.
 
+### 20.1 Local demonstration
+
+The first runnable path of the repository shall be a fully local demonstration.
+After cloning the repository and installing dependencies, a person shall be able
+to run the complete sample (Requester, Approver, and Administrator workflows,
+including attachments, notifications, and audit) with one command and a
+browser, without an AWS account, Amazon Cognito, Amazon S3, Amazon SES, Amazon
+SNS, Amazon Aurora, ACM, DNS, an external identity provider, an API key, or the
+editing of an environment file. A local container runtime for PostgreSQL is
+permitted as a prerequisite.
+
+The local demonstration shall reuse the same domain and application logic,
+browser-facing HTTP API, database model, transactional outbox, and
+authorization as the AWS deployment. Only the external infrastructure adapters
+(identity, object storage, email delivery, and event publication) differ, and
+the choice shall be an explicit configuration value that defaults to the AWS
+adapters. The local identity mechanism shall never be accepted by the AWS
+configuration. The local demonstration is for learning and evaluation on a
+single machine and is not a supported deployment.
+
 ## 21. Cloud portability requirements
 
 Although AWS is the only current target, business and application logic shall

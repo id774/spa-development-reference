@@ -11,7 +11,7 @@ DRAFT -> SUBMITTED -> APPROVED
 
 ## 1. Roles, sign in, and sign out
 
-There are three roles. Your role comes from the Cognito group your account belongs to (`Requester`, `Approver`, or `Administrator`); an administrator of the deployment assigns it.
+There are three roles. In the AWS deployment your role comes from the Cognito group your account belongs to (`Requester`, `Approver`, or `Administrator`); an administrator of the deployment assigns it. In the local demo you choose the role yourself on the sign-in screen.
 
 | Role | What it is for |
 | --- | --- |
@@ -20,6 +20,8 @@ There are three roles. Your role comes from the Cognito group your account belon
 | **Administrator** | Reads every request and its attachments, and inspects the audit history. Cannot create, edit, submit, approve, or reject. |
 
 **Signed-out screen.** When you open the application without being signed in (including after reloading the page, because the sign-in is kept only in the browser's memory), you see **You are signed out** and a **Sign in** button. Press it to authenticate on the Cognito sign-in page; afterwards you return to the application, to the page you were heading for.
+
+**Local demo.** In the local demo (`npm run demo`) the signed-out screen instead offers **Continue as Requester**, **Continue as Approver**, and **Continue as Administrator**. There is no password and no redirect; the backend derives the role from the selected demo identity. **Sign out** only clears the in-memory session and returns to this screen, so you can switch roles. Wherever this guide says to press **Sign in** as a role, press the matching **Continue as** button in the local demo.
 
 **After signing in.** The top bar shows the application title, links to the pages your role allows, your account identifier, and a **Sign out** button. **Sign out** ends the session in the application and at Cognito and returns you to the signed-out screen.
 
@@ -94,7 +96,7 @@ The navigation is the union of your roles' links, and you can do everything any 
 
 ## 7. Demo tutorial
 
-A guided pass through the whole workflow on a prepared environment ([`GETTING_STARTED.md`](GETTING_STARTED.md), section 7), with three accounts: a Requester, an Approver, and an Administrator. Each step gives the screen, the action, and what you should see.
+A guided pass through the whole workflow on a prepared environment ([`GETTING_STARTED.md`](GETTING_STARTED.md), section 4 for the local demo or section 8 for AWS), with three accounts: a Requester, an Approver, and an Administrator. In the local demo the three accounts are the **Continue as Requester / Approver / Administrator** buttons on the sign-in screen. Each step gives the screen, the action, and what you should see.
 
 ### 7.1 Requester
 
@@ -137,7 +139,7 @@ To see the other outcome, repeat 7.1 and 7.2 with a second request and press **R
 | All Requests | Open the request. | **Request Detail**, read-only, with the attachment and `APPROVED`. |
 | Audit | Open **Audit**; enter the request's ID and press **Filter**. | The events of that request: `REQUEST_CREATED`, `REQUEST_UPDATED`, `ATTACHMENT_ADDED`, `REQUEST_SUBMITTED`, `REQUEST_APPROVED`, newest first. |
 
-If everything above happened, the Level 3 criteria in [`GETTING_STARTED.md`](GETTING_STARTED.md#9-level-3-pass-criteria) are met.
+If everything above happened, the Milestone 1 criteria (local demo) in [`GETTING_STARTED.md`](GETTING_STARTED.md#45-milestone-1-pass-criteria) or the Milestone 3 criteria (AWS) in [`GETTING_STARTED.md`](GETTING_STARTED.md#10-milestone-3-pass-criteria) are met.
 
 ## 8. When something goes wrong
 

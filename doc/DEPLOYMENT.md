@@ -1,6 +1,6 @@
 # Deployment guide
 
-How the current AWS deployment is defined and deployed. The definition is the CDK application in [`infra/`](../infra/); this guide describes what it does today and nothing more. There is no automated deployment pipeline: CI only validates (it runs `cdk synth`), and a deployment is something you run yourself. Settings are listed in [`CONFIGURATION.md`](CONFIGURATION.md), runtime behavior in [`OPERATIONS.md`](OPERATIONS.md).
+How the current AWS deployment is defined and deployed. (To run the application locally without AWS, see the local demo in [`GETTING_STARTED.md`](GETTING_STARTED.md), section 4; the deployment always runs with `APP_MODE=aws`.) The definition is the CDK application in [`infra/`](../infra/); this guide describes what it does today and nothing more. There is no automated deployment pipeline: CI only validates (it runs `cdk synth`), and a deployment is something you run yourself. Settings are listed in [`CONFIGURATION.md`](CONFIGURATION.md), runtime behavior in [`OPERATIONS.md`](OPERATIONS.md).
 
 ## 1. Prerequisites
 
@@ -61,12 +61,12 @@ Replace every value with your own; omit `certificateArn` for a non-production HT
 After the first deployment, in this order:
 
 1. **Migrate the database** (section 6). Until this is done the backend answers `/health/ready` but the application cannot work.
-2. **Create users and assign groups**: the user pool starts empty. Create users and add them to the `Requester`, `Approver`, or `Administrator` group (for example with `aws cognito-idp admin-create-user` and `admin-add-user-to-group` against the `UserPoolId` output; exact commands are in [`GETTING_STARTED.md`](GETTING_STARTED.md), section 7.4). A user needs a verified email address to create requests.
+2. **Create users and assign groups**: the user pool starts empty. Create users and add them to the `Requester`, `Approver`, or `Administrator` group (for example with `aws cognito-idp admin-create-user` and `admin-add-user-to-group` against the `UserPoolId` output; exact commands are in [`GETTING_STARTED.md`](GETTING_STARTED.md), section 8.4). A user needs a verified email address to create requests.
 3. **DNS**: point `appDomain` at the `LoadBalancerDnsName` output. The stack does not manage DNS. The certificate, if any, must cover `appDomain`.
 4. **Open the deployed application** at `https://<appDomain>/` (`http://` without a certificate).
-5. **Continue with the demo**: [`GETTING_STARTED.md`](GETTING_STARTED.md), section 7 (Level 3) and the screen-by-screen [`USER_GUIDE.md`](USER_GUIDE.md).
+5. **Continue with the demo**: [`GETTING_STARTED.md`](GETTING_STARTED.md), section 8 (Milestone 3) and the screen-by-screen [`USER_GUIDE.md`](USER_GUIDE.md).
 
-A successful `cdk deploy` is not a completed demo. The stack creates no demo users, no DNS records, no SES identity verification, and no SNS subscription; the demo is complete only when the Level 3 criteria in [`GETTING_STARTED.md`](GETTING_STARTED.md), section 9, pass.
+A successful `cdk deploy` is not a completed demo. The stack creates no demo users, no DNS records, no SES identity verification, and no SNS subscription; the demo is complete only when the Milestone 3 criteria in [`GETTING_STARTED.md`](GETTING_STARTED.md), section 10, pass.
 
 ## 5. HTTPS
 

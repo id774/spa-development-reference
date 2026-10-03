@@ -1,0 +1,22 @@
+# Local demo infrastructure: a PostgreSQL 17 database for `npm run demo`.
+# The credentials are local demo values bound to 127.0.0.1 only. They are not
+# secrets and must never be used for a shared or production database.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: spa_reference
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '127.0.0.1:55432:5432'
+    volumes:
+      - spa-reference-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d spa_reference']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  spa-reference-postgres:

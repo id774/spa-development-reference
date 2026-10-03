@@ -4,20 +4,13 @@ import { z } from 'zod';
 export const CAPABILITY_NAMES = ['requests', 'approvals', 'attachments', 'audit'] as const;
 export type CapabilityName = (typeof CAPABILITY_NAMES)[number];
 
-export interface AppConfig {
+export const APP_MODES = ['local', 'aws'] as const;
+export type AppMode = (typeof APP_MODES)[number];
+
+interface BaseConfig {
   http: { host: string; port: number };
   logLevel: string;
   database: { url: string };
-  cognito: {
-    issuer: string;
-    clientId: string;
-    userInfoEndpoint: string;
-    jwksUri: string;
-  };
-  aws: { region: string };
-  s3: { bucket: string };
-  ses: { sender: string };
-  sns: { topicArn: string };
   attachments: { maxBytes: number };
   outbox: {
     pollIntervalMs: number;
@@ -30,6 +23,33 @@ export interface AppConfig {
   /** Capability routing, resolved once at startup and immutable afterwards. */
   routing: Readonly<Record<CapabilityName, 'local'>>;
 }
+
+/** Production-style mode: Cognito, S3, SES, and SNS. This is the default. */
+export interface AwsConfig extends BaseConfig {
+  mode: 'aws';
+  cognito: {
+    issuer: string;
+    clientId: string;
+    userInfoEndpoint: string;
+    jwksUri: string;
+  };
+  aws: { region: string };
+  s3: { bucket: string };
+  ses: { sender: string };
+  sns: { topicArn: string };
+}
+
+/** Local demo mode: no external account or credential. Never for production. */
+export interface LocalConfig extends BaseConfig {
+  mode: 'local';
+  local: { dataDir: string };
+}
+
+export type AppConfig = AwsConfig | LocalConfig;
+
+export const LOCAL_DEFAULT_DATABASE_URL =
+  'postgresql://postgres:postgres@127.0.0.1:55432/spa_reference';
+export const LOCAL_DEFAULT_DATA_DIR = '../.local';
 
 export class ConfigError extends Error {
   constructor(message: string) {
@@ -146,22 +166,33 @@ export function loadConfig(env: Env): AppConfig {
     problems.push('OUTBOX_CLAIM_LEASE_SECONDS must be longer than OUTBOX_PROVIDER_TIMEOUT_MS');
   }
 
-  const databaseUrl = collect(
-    required('DATABASE_URL or DB_* settings'),
-    buildDatabaseUrl(env),
-    'db',
-  );
-  const issuer = collect(url('COGNITO_ISSUER'), env['COGNITO_ISSUER'], 'COGNITO_ISSUER');
-  const clientId = collect(required('COGNITO_CLIENT_ID'), env['COGNITO_CLIENT_ID'], 'client');
-  const userInfoEndpoint = collect(
-    url('COGNITO_USERINFO_ENDPOINT'),
-    env['COGNITO_USERINFO_ENDPOINT'],
-    'userinfo',
-  );
-  const region = collect(required('AWS_REGION'), env['AWS_REGION'], 'region');
-  const bucket = collect(required('S3_BUCKET'), env['S3_BUCKET'], 'bucket');
-  const sender = collect(required('SES_SENDER'), env['SES_SENDER'], 'sender');
-  const topicArn = collect(required('SNS_TOPIC_ARN'), env['SNS_TOPIC_ARN'], 'topic');
+  const modeValue = env['APP_MODE'] ?? 'aws';
+  if (!(APP_MODES as readonly string[]).includes(modeValue)) {
+    problems.push(`APP_MODE must be one of: ${APP_MODES.join(', ')}`);
+  }
+  const mode: AppMode = modeValue === 'local' ? 'local' : 'aws';
+
+  const databaseSource =
+    buildDatabaseUrl(env) ?? (mode === 'local' ? LOCAL_DEFAULT_DATABASE_URL : undefined);
+  const databaseUrl = collect(required('DATABASE_URL or DB_* settings'), databaseSource, 'db');
+
+  // AWS settings are required in aws mode only, and never fall back to local mode.
+  const aws =
+    mode === 'aws'
+      ? {
+          issuer: collect(url('COGNITO_ISSUER'), env['COGNITO_ISSUER'], 'COGNITO_ISSUER'),
+          clientId: collect(required('COGNITO_CLIENT_ID'), env['COGNITO_CLIENT_ID'], 'client'),
+          userInfoEndpoint: collect(
+            url('COGNITO_USERINFO_ENDPOINT'),
+            env['COGNITO_USERINFO_ENDPOINT'],
+            'userinfo',
+          ),
+          region: collect(required('AWS_REGION'), env['AWS_REGION'], 'region'),
+          bucket: collect(required('S3_BUCKET'), env['S3_BUCKET'], 'bucket'),
+          sender: collect(required('SES_SENDER'), env['SES_SENDER'], 'sender'),
+          topicArn: collect(required('SNS_TOPIC_ARN'), env['SNS_TOPIC_ARN'], 'topic'),
+        }
+      : undefined;
 
   for (const name of CAPABILITY_NAMES) {
     const mode = env[`CAPABILITY_${name.toUpperCase()}_MODE`] ?? 'local';
@@ -176,20 +207,13 @@ export function loadConfig(env: Env): AppConfig {
     throw new ConfigError(`Invalid configuration:\n- ${problems.join('\n- ')}`);
   }
 
-  return {
-    http: { host: env['HOST'] ?? '0.0.0.0', port: port as number },
+  const base: BaseConfig = {
+    http: {
+      host: env['HOST'] ?? (mode === 'local' ? '127.0.0.1' : '0.0.0.0'),
+      port: port as number,
+    },
     logLevel: env['LOG_LEVEL'] ?? 'info',
     database: { url: databaseUrl as string },
-    cognito: {
-      issuer: issuer as string,
-      clientId: clientId as string,
-      userInfoEndpoint: userInfoEndpoint as string,
-      jwksUri: `${issuer as string}/.well-known/jwks.json`,
-    },
-    aws: { region: region as string },
-    s3: { bucket: bucket as string },
-    ses: { sender: sender as string },
-    sns: { topicArn: topicArn as string },
     attachments: { maxBytes: maxBytes as number },
     outbox: {
       pollIntervalMs: pollIntervalMs as number,
@@ -200,5 +224,27 @@ export function loadConfig(env: Env): AppConfig {
       batchSize: batchSize as number,
     },
     routing: { requests: 'local', approvals: 'local', attachments: 'local', audit: 'local' },
+  };
+
+  if (mode === 'local' || aws === undefined) {
+    return {
+      ...base,
+      mode: 'local',
+      local: { dataDir: env['LOCAL_DATA_DIR'] || LOCAL_DEFAULT_DATA_DIR },
+    };
+  }
+  return {
+    ...base,
+    mode: 'aws',
+    cognito: {
+      issuer: aws.issuer as string,
+      clientId: aws.clientId as string,
+      userInfoEndpoint: aws.userInfoEndpoint as string,
+      jwksUri: `${aws.issuer as string}/.well-known/jwks.json`,
+    },
+    aws: { region: aws.region as string },
+    s3: { bucket: aws.bucket as string },
+    ses: { sender: aws.sender as string },
+    sns: { topicArn: aws.topicArn as string },
   };
 }

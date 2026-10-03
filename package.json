@@ -16,6 +16,11 @@
     "infra"
   ],
   "scripts": {
+    "demo": "node scripts/demo.mjs run",
+    "demo:setup": "node scripts/demo.mjs setup",
+    "demo:backend": "node scripts/demo.mjs backend",
+    "demo:down": "node scripts/demo.mjs down",
+    "demo:reset": "node scripts/demo.mjs reset",
     "api:generate": "npm run generate -w @spa-ref/api-client",
     "api:check": "npm run api:generate && git diff --exit-code -- packages/api-client/src/generated",
     "format": "prettier --write .",
