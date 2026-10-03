@@ -38,17 +38,13 @@ Node.js 24 with npm workspaces; React, TypeScript, and Vite; NestJS; Prisma with
 
 ## Quick start
 
-```sh
-npm ci
-npm run prisma:generate
-cp .env.example .env     # then edit the placeholder values
-set -a; . ./.env; set +a
-npm run migrate:deploy   # applies the migrations to the database in DATABASE_URL
-npm run dev -w @spa-ref/backend    # terminal 1
-npm run dev -w @spa-ref/frontend   # terminal 2
-```
+**New here? Start with [`doc/GETTING_STARTED.md`](doc/GETTING_STARTED.md).** It takes you from `git clone` to a finished demo and says exactly what each step proves. Pick the path you need:
 
-Signing in locally needs a real Cognito user pool. See [`doc/DEVELOPMENT.md`](doc/DEVELOPMENT.md) for the full procedure and [`doc/CONFIGURATION.md`](doc/CONFIGURATION.md) for every setting.
+- **Verify the repository**: install, test, build, and validate everything without AWS. See [Level 1](doc/GETTING_STARTED.md#4-level-1-repository-validation).
+- **See the UI**: run the frontend alone and look at the signed-out screen. This is a rendering check, not a working sign-in. See [Level 2](doc/GETTING_STARTED.md#5-level-2-ui-smoke-check).
+- **Run the full demo**: deploy the AWS stack, create users, and walk through the Requester, Approver, and Administrator workflow. See [Level 3](doc/GETTING_STARTED.md#7-level-3-full-end-to-end-demo).
+
+The repository's placeholder configuration is not enough to sign in: authenticated use needs a real Cognito user pool, which the deployed stack provides. To use the application once it runs, read [`doc/USER_GUIDE.md`](doc/USER_GUIDE.md).
 
 ## Validation
 
@@ -64,7 +60,7 @@ Signing in locally needs a real Cognito user pool. See [`doc/DEVELOPMENT.md`](do
 | Prisma validation | `npm run prisma:validate` |
 | CDK synthesis | `npm run synth` |
 
-Details, including the database that the backend tests need, are in [`doc/DEVELOPMENT.md`](doc/DEVELOPMENT.md).
+Details, including the database that the backend tests need, are in [`doc/GETTING_STARTED.md`](doc/GETTING_STARTED.md) and [`doc/DEVELOPMENT.md`](doc/DEVELOPMENT.md).
 
 ## Repository structure
 
@@ -89,6 +85,8 @@ Details, including the database that the backend tests need, are in [`doc/DEVELO
 | [`doc/POLICY.md`](doc/POLICY.md) | Implementation and maintenance rules |
 | [`doc/INITIAL_SETUP.md`](doc/INITIAL_SETUP.md) | How to set up a new repository this way |
 | [`openapi/openapi.yaml`](openapi/openapi.yaml) | The HTTP contract |
+| [`doc/GETTING_STARTED.md`](doc/GETTING_STARTED.md) | First clone through verification and the full demo |
+| [`doc/USER_GUIDE.md`](doc/USER_GUIDE.md) | How to use the application, by role |
 | [`doc/DEVELOPMENT.md`](doc/DEVELOPMENT.md) | Local development and validation |
 | [`doc/CONFIGURATION.md`](doc/CONFIGURATION.md) | Configuration reference |
 | [`doc/DEPLOYMENT.md`](doc/DEPLOYMENT.md) | Building and deploying the AWS stack |
