@@ -1,0 +1,230 @@
+/* License: The GPL version 3, or LGPL version 3 (Dual License). */
+
+/* Signed-out / sign-in screens */
+.auth-screen {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 1.5rem 1rem;
+  background:
+    radial-gradient(60rem 32rem at 50% -10%, var(--ui-bg-glow), transparent 70%), var(--ui-bg);
+}
+.auth-card {
+  display: grid;
+  gap: 1.25rem;
+  width: min(30rem, 100%);
+  padding: 2.25rem;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: 1.25rem;
+  box-shadow: var(--ui-shadow-lg);
+}
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-weight: 650;
+}
+.auth-mode {
+  justify-self: start;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: var(--ui-warning-bg);
+  color: var(--ui-warning-fg);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.auth-intro {
+  display: grid;
+  gap: 0.5rem;
+}
+.auth-intro h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+.auth-intro p {
+  color: var(--ui-muted);
+}
+.role-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.role-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.25rem 0.9rem;
+  padding: 1rem;
+  background: var(--ui-surface-2);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  transition:
+    border-color var(--ui-transition),
+    box-shadow var(--ui-transition);
+}
+.role-card:hover,
+.role-card:focus-within {
+  border-color: var(--ui-accent-solid);
+  box-shadow: var(--ui-shadow-sm);
+}
+.role-card__avatar {
+  display: grid;
+  place-items: center;
+  grid-row: span 2;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent);
+  font-weight: 700;
+}
+.role-card__name {
+  font-weight: 650;
+}
+.role-card__description {
+  color: var(--ui-muted);
+  font-size: 0.875rem;
+}
+.role-card .ui-button {
+  grid-column: 1 / -1;
+  margin-top: 0.5rem;
+}
+.auth-footnote {
+  color: var(--ui-muted);
+  font-size: 0.8125rem;
+}
+
+/* Request detail */
+.detail-list {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: 1rem 1.5rem;
+  margin: 0;
+}
+.detail-list dt {
+  color: var(--ui-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.detail-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.detail-list__title {
+  font-size: 1.0625rem;
+  font-weight: 650;
+}
+.detail-list__text {
+  white-space: pre-wrap;
+}
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+.form-panel {
+  max-width: 44rem;
+}
+
+/* Attachments */
+.file-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.file-name::before {
+  content: '';
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  background: var(--ui-muted);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5 1.5A1.5 1.5 0 0 0 3.5 3v14A1.5 1.5 0 0 0 5 18.5h10a1.5 1.5 0 0 0 1.5-1.5V7L11 1.5H5Zm5.5 1.9L14.6 7.5h-3.4a.7.7 0 0 1-.7-.7V3.4Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5 1.5A1.5 1.5 0 0 0 3.5 3v14A1.5 1.5 0 0 0 5 18.5h10a1.5 1.5 0 0 0 1.5-1.5V7L11 1.5H5Zm5.5 1.9L14.6 7.5h-3.4a.7.7 0 0 1-.7-.7V3.4Z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+.attachment-upload {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.1rem;
+  background: var(--ui-surface-2);
+  border: 1px dashed var(--ui-border-strong);
+  border-radius: var(--ui-radius);
+}
+.attachment-upload label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.attachment-upload__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.attachment-upload input[type='file'] {
+  flex: 1 1 14rem;
+  min-width: 0;
+  color: var(--ui-muted);
+  font: inherit;
+}
+.attachment-upload input[type='file']::file-selector-button {
+  margin-right: 0.75rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-surface);
+  color: var(--ui-fg);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Audit filter */
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.filter-form .ui-field {
+  flex: 1 1 20rem;
+  max-width: 32rem;
+  margin: 0;
+}
+.filter-form .ui-button {
+  margin-top: 1.65rem;
+}
+
+.load-more {
+  justify-self: center;
+}
+
+@media (max-width: 47.9375rem) {
+  .auth-card {
+    padding: 1.5rem;
+  }
+  .detail-list {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+  .detail-list dd {
+    margin-bottom: 0.75rem;
+  }
+  .filter-form .ui-button {
+    margin-top: 0;
+  }
+}

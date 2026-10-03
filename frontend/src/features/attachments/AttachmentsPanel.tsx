@@ -1,6 +1,6 @@
 // License: The GPL version 3, or LGPL version 3 (Dual License).
 import type { Attachment } from '@spa-ref/api-client';
-import { Button, EmptyState, LoadingIndicator, Notification, Table } from '@spa-ref/ui';
+import { Button, EmptyState, LoadingIndicator, Notification, Panel, Table } from '@spa-ref/ui';
 import { useRef, useState } from 'react';
 import { useAuth } from '../../shared/auth/AuthProvider.js';
 import { ApiErrorView } from '../../shared/errors/ApiErrorView.js';
@@ -66,8 +66,7 @@ export function AttachmentsPanel({
   }
 
   return (
-    <section aria-labelledby="attachments-heading">
-      <h2 id="attachments-heading">Attachments</h2>
+    <Panel title="Attachments">
       {list.state === 'loading' ? <LoadingIndicator label="Loading attachments" /> : null}
       {list.state === 'error' ? <ApiErrorView error={list.error} /> : null}
       {list.state === 'ready' && list.items.length === 0 ? (
@@ -79,9 +78,21 @@ export function AttachmentsPanel({
           rows={list.items}
           rowKey={(a) => a.id}
           columns={[
-            { key: 'name', header: 'File', render: (a) => a.fileName },
-            { key: 'type', header: 'Type', render: (a) => a.mediaType },
-            { key: 'size', header: 'Size', render: (a) => formatSize(a.sizeBytes) },
+            {
+              key: 'name',
+              header: 'File',
+              render: (a) => <span className="file-name">{a.fileName}</span>,
+            },
+            {
+              key: 'type',
+              header: 'Type',
+              render: (a) => <span className="ui-meta">{a.mediaType}</span>,
+            },
+            {
+              key: 'size',
+              header: 'Size',
+              render: (a) => <span className="ui-meta">{formatSize(a.sizeBytes)}</span>,
+            },
             {
               key: 'action',
               header: 'Download',
@@ -95,24 +106,28 @@ export function AttachmentsPanel({
         />
       ) : null}
       {list.hasMore ? (
-        <Button onClick={() => void list.loadMore()}>Load more attachments</Button>
+        <Button className="load-more" onClick={() => void list.loadMore()}>
+          Load more attachments
+        </Button>
       ) : null}
       {canUpload ? (
-        <div>
+        <div className="attachment-upload">
           <label htmlFor="attachment-file">Attach a file</label>
-          <input
-            id="attachment-file"
-            ref={fileInput}
-            type="file"
-            accept=".pdf,.png,.jpg,.jpeg,.txt,application/pdf,image/png,image/jpeg,text/plain"
-          />
-          <Button variant="primary" busy={busy} onClick={() => void upload()}>
-            Upload
-          </Button>
+          <div className="attachment-upload__row">
+            <input
+              id="attachment-file"
+              ref={fileInput}
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.txt,application/pdf,image/png,image/jpeg,text/plain"
+            />
+            <Button variant="primary" busy={busy} onClick={() => void upload()}>
+              Upload
+            </Button>
+          </div>
         </div>
       ) : null}
       {message ? <Notification>{message}</Notification> : null}
       {failure ? <ApiErrorView error={failure} /> : null}
-    </section>
+    </Panel>
   );
 }

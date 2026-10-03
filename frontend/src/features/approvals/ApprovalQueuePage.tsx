@@ -1,6 +1,6 @@
 // License: The GPL version 3, or LGPL version 3 (Dual License).
 import type { ApiRequest } from '@spa-ref/api-client';
-import { Button, EmptyState, LoadingIndicator } from '@spa-ref/ui';
+import { Button, EmptyState, LoadingIndicator, PageHeader } from '@spa-ref/ui';
 import { useAuth } from '../../shared/auth/AuthProvider.js';
 import { ApiErrorView } from '../../shared/errors/ApiErrorView.js';
 import { usePagedList } from '../../shared/state/hooks.js';
@@ -15,7 +15,7 @@ export function ApprovalQueuePage() {
   );
   return (
     <>
-      <h2>Approval Queue</h2>
+      <PageHeader title="Approval Queue" description="Submitted requests, oldest first." />
       {list.state === 'loading' ? <LoadingIndicator /> : null}
       {list.state === 'error' ? <ApiErrorView error={list.error} /> : null}
       {list.state === 'ready' && list.items.length === 0 ? (
@@ -24,7 +24,11 @@ export function ApprovalQueuePage() {
       {list.items.length > 0 ? (
         <RequestTable caption="Waiting for a decision" rows={list.items} />
       ) : null}
-      {list.hasMore ? <Button onClick={() => void list.loadMore()}>Load more</Button> : null}
+      {list.hasMore ? (
+        <Button className="load-more" onClick={() => void list.loadMore()}>
+          Load more
+        </Button>
+      ) : null}
     </>
   );
 }

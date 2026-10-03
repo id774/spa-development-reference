@@ -27,6 +27,14 @@ import { RequestNewPage } from '../features/requests/RequestNewPage.js';
 import { useAuth } from '../shared/auth/AuthProvider.js';
 import { LOCAL_DEMO_ROLES } from '../shared/auth/local-demo.js';
 
+const APP_TITLE = 'SPA Development Reference';
+
+const ROLE_SUMMARY: Readonly<Record<SessionRole, string>> = {
+  Requester: 'Create and submit requests',
+  Approver: 'Review submitted requests',
+  Administrator: 'Inspect requests and audit history',
+};
+
 const NO_ROLE_MESSAGE =
   'Your account has no application role. Ask an administrator to grant access.';
 
@@ -73,7 +81,7 @@ function Layout() {
   if (roles.includes('Administrator')) navigation.push(link('/admin/audit', 'Audit'));
   return (
     <AppShell
-      title="SPA Development Reference"
+      title={APP_TITLE}
       navigation={navigation}
       account={
         <>
@@ -104,39 +112,69 @@ function SignedOutPage() {
   useEffect(() => {
     if (status === 'signed-in') void navigate('/', { replace: true });
   }, [navigate, status]);
+  const brand = (
+    <div className="auth-brand">
+      <span className="ui-shell__mark" aria-hidden="true" />
+      {APP_TITLE}
+    </div>
+  );
   if (authMode === 'local') {
     return (
-      <main className="signed-out">
-        <h1>You are signed out</h1>
-        <p>Local demo: choose a role to continue. No external service is used.</p>
-        {localFailed ? (
-          <ErrorMessage
-            title="The local demo backend did not accept the selection."
-            detail="Check that npm run demo is running."
-          />
-        ) : null}
-        {LOCAL_DEMO_ROLES.map((role) => (
-          <Button
-            key={role}
-            variant="primary"
-            onClick={() => {
-              setLocalFailed(false);
-              signInLocal(role).catch(() => setLocalFailed(true));
-            }}
-          >
-            Continue as {role}
-          </Button>
-        ))}
+      <main className="auth-screen">
+        <div className="auth-card">
+          {brand}
+          <p className="auth-mode">Local demo mode</p>
+          <div className="auth-intro">
+            <h1>You are signed out</h1>
+            <p>Local demo: choose a role to continue. No external service is used.</p>
+          </div>
+          {localFailed ? (
+            <ErrorMessage
+              title="The local demo backend did not accept the selection."
+              detail="Check that npm run demo is running."
+            />
+          ) : null}
+          <ul className="role-list">
+            {LOCAL_DEMO_ROLES.map((role) => (
+              <li key={role} className="role-card">
+                <span className="role-card__avatar" aria-hidden="true">
+                  {role.slice(0, 2)}
+                </span>
+                <div>
+                  <p className="role-card__name">{role}</p>
+                  <p className="role-card__description" id={`role-${role}-description`}>
+                    {ROLE_SUMMARY[role]}
+                  </p>
+                </div>
+                <Button
+                  variant="primary"
+                  aria-describedby={`role-${role}-description`}
+                  onClick={() => {
+                    setLocalFailed(false);
+                    signInLocal(role).catch(() => setLocalFailed(true));
+                  }}
+                >
+                  Continue as {role}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </main>
     );
   }
   return (
-    <main className="signed-out">
-      <h1>You are signed out</h1>
-      <p>Sign in to continue.</p>
-      <Button variant="primary" onClick={() => void signIn(returnPath)}>
-        Sign in
-      </Button>
+    <main className="auth-screen">
+      <div className="auth-card">
+        {brand}
+        <div className="auth-intro">
+          <h1>You are signed out</h1>
+          <p>Sign in to continue.</p>
+        </div>
+        <Button variant="primary" onClick={() => void signIn(returnPath)}>
+          Sign in
+        </Button>
+      </div>
     </main>
   );
 }
@@ -160,15 +198,23 @@ function CallbackPage() {
 
   if (failed) {
     return (
-      <main className="signed-out">
-        <ErrorMessage title="Sign-in failed" detail="The sign-in could not be completed." />
-        <Button variant="primary" onClick={() => void navigate('/signed-out', { replace: true })}>
-          Back to sign in
-        </Button>
+      <main className="auth-screen">
+        <div className="auth-card">
+          <ErrorMessage title="Sign-in failed" detail="The sign-in could not be completed." />
+          <Button variant="primary" onClick={() => void navigate('/signed-out', { replace: true })}>
+            Back to sign in
+          </Button>
+        </div>
       </main>
     );
   }
-  return <LoadingIndicator label="Signing in" />;
+  return (
+    <main className="auth-screen">
+      <div className="auth-card">
+        <LoadingIndicator label="Signing in" />
+      </div>
+    </main>
+  );
 }
 
 export function App() {

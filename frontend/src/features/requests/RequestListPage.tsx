@@ -1,6 +1,14 @@
 // License: The GPL version 3, or LGPL version 3 (Dual License).
 import type { ApiRequest } from '@spa-ref/api-client';
-import { Button, EmptyState, LoadingIndicator, Table } from '@spa-ref/ui';
+import {
+  Button,
+  buttonClass,
+  EmptyState,
+  LoadingIndicator,
+  PageHeader,
+  StatusBadge,
+  Table,
+} from '@spa-ref/ui';
 import { Link } from 'react-router';
 import { useAuth } from '../../shared/auth/AuthProvider.js';
 import { ApiErrorView } from '../../shared/errors/ApiErrorView.js';
@@ -22,8 +30,12 @@ export function RequestTable({ caption, rows }: { caption: string; rows: ApiRequ
           header: 'Title',
           render: (r) => <Link to={`/requests/${r.id}`}>{r.title}</Link>,
         },
-        { key: 'status', header: 'Status', render: (r) => r.status },
-        { key: 'updated', header: 'Updated', render: (r) => formatDate(r.updatedAt) },
+        { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+        {
+          key: 'updated',
+          header: 'Updated',
+          render: (r) => <span className="ui-meta">{formatDate(r.updatedAt)}</span>,
+        },
       ]}
     />
   );
@@ -37,21 +49,31 @@ export function RequestListPage() {
     'requests',
   );
   const heading = roles.includes('Requester') ? 'My Requests' : 'All Requests';
+  const isRequester = roles.includes('Requester');
   return (
     <>
-      <h2>{heading}</h2>
-      {roles.includes('Requester') ? (
-        <p>
-          <Link to="/requests/new">Create Request</Link>
-        </p>
-      ) : null}
+      <PageHeader
+        title={heading}
+        description={isRequester ? 'Requests you have created.' : 'Every request in the system.'}
+        actions={
+          isRequester ? (
+            <Link to="/requests/new" className={buttonClass('primary')}>
+              Create Request
+            </Link>
+          ) : undefined
+        }
+      />
       {list.state === 'loading' ? <LoadingIndicator /> : null}
       {list.state === 'error' ? <ApiErrorView error={list.error} /> : null}
       {list.state === 'ready' && list.items.length === 0 ? (
         <EmptyState title="There are no requests yet." />
       ) : null}
       {list.items.length > 0 ? <RequestTable caption={heading} rows={list.items} /> : null}
-      {list.hasMore ? <Button onClick={() => void list.loadMore()}>Load more</Button> : null}
+      {list.hasMore ? (
+        <Button className="load-more" onClick={() => void list.loadMore()}>
+          Load more
+        </Button>
+      ) : null}
     </>
   );
 }

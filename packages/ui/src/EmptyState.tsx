@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="ui-empty">
+      <span className="ui-empty__icon" aria-hidden="true" />
       <p className="ui-empty__title">{title}</p>
       {children}
     </div>

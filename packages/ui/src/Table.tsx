@@ -19,26 +19,28 @@ export function Table<Row>({
   rowKey: (row: Row) => string;
 }) {
   return (
-    <table className="ui-table">
-      <caption className="ui-table__caption">{caption}</caption>
-      <thead>
-        <tr>
-          {columns.map((column) => (
-            <th key={column.key} scope="col">
-              {column.header}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={rowKey(row)}>
+    <div className="ui-table-wrap">
+      <table className="ui-table">
+        <caption className="ui-visually-hidden">{caption}</caption>
+        <thead>
+          <tr>
             {columns.map((column) => (
-              <td key={column.key}>{column.render(row)}</td>
+              <th key={column.key} scope="col">
+                {column.header}
+              </th>
             ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={rowKey(row)}>
+              {columns.map((column) => (
+                <td key={column.key}>{column.render(row)}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

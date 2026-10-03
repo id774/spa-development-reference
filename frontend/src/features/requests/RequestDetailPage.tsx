@@ -1,6 +1,15 @@
 // License: The GPL version 3, or LGPL version 3 (Dual License).
 import type { ApiRequest } from '@spa-ref/api-client';
-import { Button, Dialog, LoadingIndicator, Notification, TextAreaField } from '@spa-ref/ui';
+import {
+  Button,
+  Dialog,
+  LoadingIndicator,
+  Notification,
+  PageHeader,
+  Panel,
+  StatusBadge,
+  TextAreaField,
+} from '@spa-ref/ui';
 import { useState } from 'react';
 import { useParams } from 'react-router';
 import { AttachmentsPanel } from '../attachments/AttachmentsPanel.js';
@@ -53,58 +62,84 @@ export function RequestDetailPage() {
 
   return (
     <>
-      <h2>{heading}</h2>
-      <dl>
-        <dt>Title</dt>
-        <dd>{request.title}</dd>
-        <dt>Description</dt>
-        <dd style={{ whiteSpace: 'pre-wrap' }}>{request.description}</dd>
-        <dt>Status</dt>
-        <dd>{request.status}</dd>
-        <dt>Updated</dt>
-        <dd>{formatDate(request.updatedAt)}</dd>
-      </dl>
+      <PageHeader title={heading} badge={<StatusBadge status={request.status} />} />
+
+      {message ? <Notification>{message}</Notification> : null}
+      {failure ? (
+        <>
+          <ApiErrorView error={failure} />
+          <div className="action-row">
+            <Button onClick={reload}>Reload request</Button>
+          </div>
+        </>
+      ) : null}
+
+      <Panel title="Overview">
+        <dl className="detail-list">
+          <dt>Title</dt>
+          <dd className="detail-list__title">{request.title}</dd>
+          <dt>Description</dt>
+          <dd className="detail-list__text">{request.description}</dd>
+          <dt>Updated</dt>
+          <dd>{formatDate(request.updatedAt)}</dd>
+        </dl>
+      </Panel>
 
       {canEdit ? (
         <>
-          <h3>Edit Draft Request</h3>
-          <RequestForm
-            key={request.version}
-            initial={{ title: request.title, description: request.description }}
-            submitLabel="Save draft"
-            busy={busy}
-            onSubmit={(values) =>
-              void run(
-                () => api.updateDraftRequest(request.id, { ...values, version: request.version }),
-                'Draft saved.',
-              )
-            }
-          />
-          <Button
-            variant="primary"
-            busy={busy}
-            onClick={() =>
-              void run(
-                () => api.submitRequest(request.id, { version: request.version }),
-                'Request submitted.',
-              )
-            }
+          <Panel title="Edit Draft Request">
+            <RequestForm
+              key={request.version}
+              initial={{ title: request.title, description: request.description }}
+              submitLabel="Save draft"
+              busy={busy}
+              onSubmit={(values) =>
+                void run(
+                  () => api.updateDraftRequest(request.id, { ...values, version: request.version }),
+                  'Draft saved.',
+                )
+              }
+            />
+          </Panel>
+          <Panel
+            title="Submit for approval"
+            description="Submitting sends the draft to an Approver. A submitted request can no longer be edited."
           >
-            Submit
-          </Button>
+            <div className="action-row">
+              <Button
+                variant="primary"
+                busy={busy}
+                onClick={() =>
+                  void run(
+                    () => api.submitRequest(request.id, { version: request.version }),
+                    'Request submitted.',
+                  )
+                }
+              >
+                Submit
+              </Button>
+            </div>
+          </Panel>
         </>
       ) : null}
 
       {canDecide ? (
-        <div>
-          <Button variant="primary" onClick={() => setDecision('approve')}>
-            Approve
-          </Button>{' '}
-          <Button variant="danger" onClick={() => setDecision('reject')}>
-            Reject
-          </Button>
-        </div>
+        <Panel
+          title="Decision"
+          description="Approve or reject this request. You may add a comment."
+        >
+          <div className="action-row">
+            <Button variant="primary" onClick={() => setDecision('approve')}>
+              Approve
+            </Button>
+            <Button variant="danger" onClick={() => setDecision('reject')}>
+              Reject
+            </Button>
+          </div>
+        </Panel>
       ) : null}
+
+      <AttachmentsPanel requestId={request.id} canUpload={canEdit} />
 
       {decision !== null ? (
         <Dialog
@@ -117,38 +152,30 @@ export function RequestDetailPage() {
             maxLength={2000}
             onChange={(e) => setComment(e.target.value)}
           />
-          <Button
-            variant={decision === 'approve' ? 'primary' : 'danger'}
-            busy={busy}
-            onClick={() => {
-              const body = {
-                version: request.version,
-                ...(comment.trim() === '' ? {} : { comment }),
-              };
-              void run(
-                () =>
-                  decision === 'approve'
-                    ? api.approveRequest(request.id, body)
-                    : api.rejectRequest(request.id, body),
-                decision === 'approve' ? 'Request approved.' : 'Request rejected.',
-              );
-            }}
-          >
-            Confirm
-          </Button>{' '}
-          <Button onClick={() => setDecision(null)}>Cancel</Button>
+          <div className="ui-dialog__actions">
+            <Button onClick={() => setDecision(null)}>Cancel</Button>
+            <Button
+              variant={decision === 'approve' ? 'primary' : 'danger'}
+              busy={busy}
+              onClick={() => {
+                const body = {
+                  version: request.version,
+                  ...(comment.trim() === '' ? {} : { comment }),
+                };
+                void run(
+                  () =>
+                    decision === 'approve'
+                      ? api.approveRequest(request.id, body)
+                      : api.rejectRequest(request.id, body),
+                  decision === 'approve' ? 'Request approved.' : 'Request rejected.',
+                );
+              }}
+            >
+              Confirm
+            </Button>
+          </div>
         </Dialog>
       ) : null}
-
-      {message ? <Notification>{message}</Notification> : null}
-      {failure ? (
-        <>
-          <ApiErrorView error={failure} />
-          <Button onClick={reload}>Reload request</Button>
-        </>
-      ) : null}
-
-      <AttachmentsPanel requestId={request.id} canUpload={canEdit} />
     </>
   );
 }

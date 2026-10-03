@@ -12,7 +12,7 @@ export function ErrorMessage({
   return (
     <div role="alert" className="ui-error">
       <p className="ui-error__title">{title}</p>
-      {detail ? <p>{detail}</p> : null}
+      {detail ? <p className="ui-error__detail">{detail}</p> : null}
       {reference ? <p className="ui-error__reference">Reference: {reference}</p> : null}
     </div>
   );
