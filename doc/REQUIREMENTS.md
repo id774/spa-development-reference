@@ -2,7 +2,7 @@
 
 ## 1. Purpose of this document
 
-This document states what `spa-development-reference` is for, what kind of
+This document states what `spa-reference` is for, what kind of
 application it demonstrates, which capabilities it is required to cover, which
 architecture is currently supported, and where its responsibility ends.
 
@@ -23,7 +23,7 @@ extension direction and is not a requirement on the current implementation.
 
 ## 2. Name and position
 
-The repository is named `spa-development-reference`.
+The repository is named `spa-reference`.
 
 It is a public reference implementation for building transactional web
 applications as single-page applications. It integrates a selected set of

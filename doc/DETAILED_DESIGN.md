@@ -3,7 +3,7 @@
 ## 1. Purpose
 
 This document defines the implementation-significant semantics that govern the
-current `spa-development-reference` implementation and constrain later changes.
+current `spa-reference` implementation and constrain later changes.
 
 The requirements define what the reference supports.
 The basic design defines the architecture and responsibility boundaries.

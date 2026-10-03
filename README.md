@@ -1,4 +1,4 @@
-# spa-development-reference
+# spa-reference
 
 A public reference implementation of a transactional business single-page application: a React and TypeScript SPA in front of a NestJS BFF/backend, running on AWS.
 
@@ -49,8 +49,8 @@ installed or one of these checks fails, follow
 before running the demo.
 
 ```bash
-git clone https://github.com/id774/spa-development-reference.git
-cd spa-development-reference
+git clone https://github.com/id774/spa-reference.git
+cd spa-reference
 npm ci
 npm run demo
 ```
