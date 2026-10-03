@@ -42,10 +42,11 @@ From the repository root:
 
 ```sh
 npm ci
-npm run prisma:generate
 ```
 
-Expected: both commands exit with code 0, the workspace dependencies are installed, and the Prisma client is generated into `backend/src/generated/`.
+Expected: the command exits with code 0 and the workspace dependencies are installed.
+
+This is the only install step before the local demo; continue with `npm run demo` (section 4.1). It generates the Prisma client itself, so you do not need to run `npm run prisma:generate` first. Run `npm run prisma:generate` directly when you need the Prisma client in `backend/src/generated/` outside the demo, for example when working on the backend on its own or during repository validation.
 
 ## 4. Milestone 1: Local demo
 
