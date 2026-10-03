@@ -7,7 +7,12 @@ info:
     application, a generic request and approval sample.
 
     All business endpoints require a Bearer JWT access token issued by the
-    identity provider. Expected failures use `application/problem+json` with a
+    identity provider. The application role of the caller (Requester,
+    Approver, or Administrator) is derived from the `cognito:groups` claim of
+    the validated access token; each operation states the roles it requires.
+    A caller that lacks the required role, or that is not permitted to use the
+    addressed resource, receives `403 FORBIDDEN`. The Administrator role is not
+    a superuser. Expected failures use `application/problem+json` with a
     stable application `code` and a `traceId`.
 servers:
   - url: /
@@ -25,6 +30,16 @@ paths:
       operationId: listRequests
       tags: [Requests]
       summary: List requests visible to the caller
+      description: |
+        Requester: only requests whose `requesterId` is the caller. Administrator:
+        all requests. A caller with both roles sees the union. A caller with
+        neither role (for example an Approver only) receives `403 FORBIDDEN`.
+
+        Order: `updatedAt` descending, then `id` ascending. Pagination is
+        applied after the visibility filter.
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
       responses:
         '200':
           description: Requests visible to the caller.
@@ -32,14 +47,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RequestList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalError'
     post:
       operationId: createRequest
       tags: [Requests]
       summary: Create a request in DRAFT state
+      description: |
+        Requires the Requester role and a verified email address on the caller's
+        identity; otherwise `403 FORBIDDEN`. The `requesterId` of the created
+        request is the caller's subject.
       requestBody:
         required: true
         content:
@@ -68,6 +91,10 @@ paths:
       operationId: getRequest
       tags: [Requests]
       summary: Get a request
+      description: |
+        Requester: own request in any state. Approver: requests in `SUBMITTED`
+        state only. Administrator: any request. Otherwise `403 FORBIDDEN`. A
+        request that does not exist is `404`.
       responses:
         '200':
           description: The request.
@@ -87,7 +114,11 @@ paths:
       operationId: updateDraftRequest
       tags: [Requests]
       summary: Update a draft request
-      description: Only a request in `DRAFT` state can be updated.
+      description: |
+        Requires the Requester role and ownership of the request (otherwise
+        `403 FORBIDDEN`). Only a request in `DRAFT` state can be updated;
+        otherwise `409 REQUEST_INVALID_STATE`. A stale `version` is
+        `409 CONCURRENCY_CONFLICT`.
       requestBody:
         required: true
         content:
@@ -120,7 +151,12 @@ paths:
       operationId: submitRequest
       tags: [Requests]
       summary: Submit a draft request
-      description: Transitions the request from `DRAFT` to `SUBMITTED`.
+      description: |
+        Transitions the request from `DRAFT` to `SUBMITTED`. Requires the
+        Requester role and ownership of the request (otherwise
+        `403 FORBIDDEN`). A request not in `DRAFT` state is
+        `409 REQUEST_INVALID_STATE`. A stale `version` is
+        `409 CONCURRENCY_CONFLICT`.
       requestBody:
         required: true
         content:
@@ -153,7 +189,11 @@ paths:
       operationId: approveRequest
       tags: [Approvals]
       summary: Approve a submitted request
-      description: Transitions the request from `SUBMITTED` to `APPROVED`.
+      description: |
+        Transitions the request from `SUBMITTED` to `APPROVED`. Requires the
+        Approver role (otherwise `403 FORBIDDEN`). A request not in `SUBMITTED`
+        state is `409 REQUEST_INVALID_STATE`. A stale `version` is
+        `409 CONCURRENCY_CONFLICT`.
       requestBody:
         required: true
         content:
@@ -186,7 +226,11 @@ paths:
       operationId: rejectRequest
       tags: [Approvals]
       summary: Reject a submitted request
-      description: Transitions the request from `SUBMITTED` to `REJECTED`.
+      description: |
+        Transitions the request from `SUBMITTED` to `REJECTED`. Requires the
+        Approver role (otherwise `403 FORBIDDEN`). A request not in `SUBMITTED`
+        state is `409 REQUEST_INVALID_STATE`. A stale `version` is
+        `409 CONCURRENCY_CONFLICT`.
       requestBody:
         required: true
         content:
@@ -217,6 +261,16 @@ paths:
       operationId: listApprovalQueue
       tags: [Approvals]
       summary: List requests awaiting a decision
+      description: |
+        Requires the Approver role (otherwise `403 FORBIDDEN`). Returns requests
+        in `SUBMITTED` state.
+
+        Order: `updatedAt` ascending, then `id` ascending, so that the oldest
+        submitted request comes first. Pagination is applied after the state
+        filter.
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
       responses:
         '200':
           description: Requests awaiting a decision.
@@ -224,6 +278,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RequestList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -238,6 +294,10 @@ paths:
       tags: [Attachments]
       summary: Attach a file to a request
       description: |
+        Requires the Requester role and ownership of the request (otherwise
+        `403 FORBIDDEN`). The request must be in `DRAFT` state; otherwise
+        `409 REQUEST_INVALID_STATE`.
+
         The maximum upload size is not fixed by this contract. It is set by
         deployment configuration; exceeding it is reported as a `400`
         `VALIDATION_ERROR` problem.
@@ -268,6 +328,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalError'
         '503':
@@ -280,6 +342,12 @@ paths:
       operationId: downloadAttachment
       tags: [Attachments]
       summary: Download an attachment
+      description: |
+        Requester: an attachment of an own request, in any request state.
+        Approver: an attachment of a request in `SUBMITTED` state.
+        Administrator: any attachment. Otherwise `403 FORBIDDEN`. An attachment
+        that does not belong to the `requestId` in the path is
+        `404 ATTACHMENT_NOT_FOUND`.
       responses:
         '200':
           description: The attachment content.
@@ -309,7 +377,15 @@ paths:
       operationId: listAuditEvents
       tags: [Audit]
       summary: List audit events
+      description: |
+        Requires the Administrator role (otherwise `403 FORBIDDEN`). The
+        optional `requestId` filter is applied first.
+
+        Order: `occurredAt` descending, then `id` ascending. Pagination is
+        applied after the filter.
       parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
         - name: requestId
           in: query
           required: false
@@ -354,6 +430,27 @@ components:
       schema:
         type: string
         format: uuid
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Maximum number of items in the page.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: |
+        Opaque cursor taken from `nextCursor` of the previous page. Clients do
+        not interpret its content. A malformed, invalid, or expired cursor is a
+        `400 VALIDATION_ERROR`.
+      schema:
+        type: string
+        minLength: 1
   responses:
     BadRequest:
       description: Validation failure (`VALIDATION_ERROR`).
@@ -479,6 +576,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RequestSummary'
+        nextCursor:
+          type: string
+          minLength: 1
+          description: Cursor for the next page. Omitted when there is no next page.
     CreateRequestInput:
       type: object
       required: [title, description]
@@ -554,7 +655,21 @@ components:
         createdAt:
           type: string
           format: date-time
+    AuditEventType:
+      description: Closed set of audit event types.
+      type: string
+      enum:
+        - REQUEST_CREATED
+        - REQUEST_UPDATED
+        - REQUEST_SUBMITTED
+        - REQUEST_APPROVED
+        - REQUEST_REJECTED
+        - ATTACHMENT_ADDED
     AuditEvent:
+      description: |
+        `fromState` is null for `REQUEST_CREATED`. For `ATTACHMENT_ADDED` both
+        states equal the current request state and `details` contains at least
+        `attachmentId`.
       type: object
       required: [id, requestId, eventType, actorId, occurredAt]
       properties:
@@ -565,8 +680,7 @@ components:
           type: string
           format: uuid
         eventType:
-          type: string
-          minLength: 1
+          $ref: '#/components/schemas/AuditEventType'
         actorId:
           type: string
           minLength: 1
@@ -591,6 +705,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AuditEvent'
+        nextCursor:
+          type: string
+          minLength: 1
+          description: Cursor for the next page. Omitted when there is no next page.
     ErrorCode:
       description: Stable machine-readable application error identifier.
       type: string

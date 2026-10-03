@@ -276,6 +276,23 @@ Operations that change state use explicit business-action endpoints such as
 `submit`, `approve`, and `reject` rather than encoding every transition as an
 arbitrary status field update.
 
+List endpoints use cursor pagination with a deterministic order.
+
+For each list operation, the owning capability applies, in this order:
+
+1. the visibility and state filter that belongs to the caller and the
+   operation;
+2. any optional query filter; and
+3. the stable sort defined for that list, ending in a unique tie-break key.
+
+Pagination is applied only after those steps. The cursor identifies the
+position in the stable sort, is opaque to the client, and is never parsed by the
+client. A malformed, invalid, or expired cursor is a validation failure mapped
+to `VALIDATION_ERROR`.
+
+The concrete query parameters, limits, response envelope, and sort order of each
+list endpoint are defined in OpenAPI.
+
 ## 9. API error model
 
 Expected API failures use `application/problem+json` based on Problem Details.
@@ -311,6 +328,7 @@ and retain diagnostic detail only in server-side logs.
 The current identity provider is Amazon Cognito.
 
 The browser uses OAuth 2.0 Authorization Code flow with PKCE against Cognito.
+The authorization request asks for the `openid email` scopes.
 
 ```text
 Browser SPA
@@ -338,15 +356,98 @@ BFF
 
 The SPA does not contain a client secret.
 
-The BFF validates the access token before executing an authenticated business
-operation.
+### 10.1 Access-token validation
 
-The BFF maps identity and group or role claims required by the sample to the
-application roles Requester, Approver, and Administrator.
+The BFF validates the bearer access token before executing an authenticated
+business operation. At minimum it verifies that:
+
+- the signature is valid against the JWKS of the configured Cognito user pool;
+- the signing key identified by the token `kid` exists in the configured
+  issuer JWKS;
+- the JWT `iss` equals the configured Cognito user-pool issuer;
+- the JWT `client_id` equals the configured SPA app-client ID;
+- the JWT `token_use` equals `access`; and
+- the JWT `exp` is in the future.
+
+An implementation that only decodes the token without verifying the signature is
+not permitted.
+
+A request whose token fails validation, or that has no token, receives
+`401 AUTHENTICATION_REQUIRED`.
+
+The BFF does not accept an ID token as the basis for authorization.
+
+### 10.2 Application identity
+
+After validation the BFF passes an application identity value, not an AWS SDK
+object, to the rest of the application. The identity has:
+
+- `subject`: the `sub` claim of the validated access token;
+- `roles`: the application roles derived from the `cognito:groups` claim of the
+  validated access token; and
+- `email`: a verified email address obtained as described in section 10.3,
+  where an operation needs it.
+
+Roles are determined only from the validated access token. A role field supplied
+by the browser is never trusted.
+
+The mapping from Cognito group to application role uses exact group names:
+
+| Cognito group | Application role |
+| --- | --- |
+| `Requester` | Requester |
+| `Approver` | Approver |
+| `Administrator` | Administrator |
+
+A user who belongs to several of these groups holds the union of the
+permissions of those roles.
+
+An authenticated user who belongs to none of these groups holds no application
+role. Every operation that requires a role fails for that user with
+`403 FORBIDDEN`.
+
+### 10.3 Verified email
+
+The Cognito identity adapter obtains the email address by calling the Cognito
+UserInfo endpoint with the validated access token. The address becomes the
+identity `email` only when all of the following hold:
+
+- the `sub` returned by UserInfo equals the `sub` of the validated token;
+- `email` is present and non-empty; and
+- `email_verified` is `true`.
+
+Creating a request requires a verified email. If the condition is not met, the
+operation fails with `403 FORBIDDEN`.
+
+A failure to reach UserInfo is an unclassified infrastructure failure and is
+reported as `500 INTERNAL_ERROR`.
+
+On request creation the verified email is stored on the request record as the
+internal field `requester_email`. It is not exposed in the browser-facing
+`Request` schema and is not written to ordinary logs or to audit `details`.
+
+### 10.4 SPA token lifecycle
+
+The SPA keeps the access token, and a refresh token when one is issued, in
+browser memory only. It does not store either token in `localStorage`,
+`sessionStorage`, IndexedDB, or an application-managed persistent cookie.
+
+Before the access token expires, the SPA attempts to refresh it when a refresh
+token is available.
+
+The SPA discards its in-memory tokens and starts a new Authorization Code
+with PKCE flow when:
+
+- no refresh token is available;
+- a refresh attempt fails;
+- the BFF returns `401 AUTHENTICATION_REQUIRED`; or
+- the in-memory tokens are lost, for example by a page reload.
+
+If a Cognito SSO session still exists, the new authorization may complete
+without prompting the user for credentials.
 
 Cognito-specific token parsing and validation belong to the identity
-infrastructure adapter. The rest of the application receives an application
-identity value rather than an AWS SDK object.
+infrastructure adapter.
 
 ## 11. Authorization model
 
@@ -354,24 +455,53 @@ Authorization is enforced in two stages.
 
 ### 11.1 BFF authorization
 
-The BFF enforces coarse-grained access to browser-facing operations.
+The BFF enforces coarse-grained access to browser-facing operations by
+application role, as determined in section 10.2.
 
-Examples:
-
-- Requester may create and submit their own requests.
-- Approver may access approval operations.
-- Administrator may access audit inspection operations.
+- Creating a request requires the Requester role.
+- The approval queue, approve, and reject require the Approver role.
+- The audit list requires the Administrator role.
+- Listing requests requires the Requester or the Administrator role.
 
 ### 11.2 Capability authorization
 
-The owning business capability enforces domain rules that depend on business
-state or ownership.
+The owning business capability enforces rules that depend on ownership and
+business state. "Own" means that the request `requesterId` equals the identity
+`subject`.
 
-Examples:
+A missing resource is reported as `404`. A resource that exists but that the
+caller is not permitted to use is reported as `403 FORBIDDEN`. A permitted
+caller that requests an operation not valid for the current state receives
+`409 REQUEST_INVALID_STATE`.
 
-- a Requester may edit only an authorized request in `DRAFT`;
-- an Approver may approve only a request in `SUBMITTED`;
-- a user may access an attachment only when they may access its request.
+The Administrator role is not a superuser. It grants read access and audit
+access only. A user who holds the Administrator role alone cannot create,
+update, submit, approve, or reject a request. When a user holds further roles,
+the permissions of those roles are added.
+
+### 11.3 Permission matrix
+
+| Operation | Requester | Approver | Administrator |
+| --- | --- | --- | --- |
+| `GET /api/requests` | own requests only | not permitted | all requests |
+| `POST /api/requests` | permitted | not permitted | not permitted |
+| `GET /api/requests/{requestId}` | own request, any state | `SUBMITTED` requests only | any request |
+| `PUT /api/requests/{requestId}` | own request in `DRAFT` | not permitted | not permitted |
+| `POST /api/requests/{requestId}/submit` | own request in `DRAFT` | not permitted | not permitted |
+| `GET /api/approvals` | not permitted | `SUBMITTED` requests | not permitted |
+| `POST /api/requests/{requestId}/approve` | not permitted | request in `SUBMITTED` | not permitted |
+| `POST /api/requests/{requestId}/reject` | not permitted | request in `SUBMITTED` | not permitted |
+| `POST /api/requests/{requestId}/attachments` | own request in `DRAFT` | not permitted | not permitted |
+| `GET /api/requests/{requestId}/attachments/{attachmentId}` | attachment of own request, any state | attachment of a `SUBMITTED` request | any attachment |
+| `GET /api/admin/audit` | not permitted | not permitted | permitted |
+
+"Not permitted" means `403 FORBIDDEN`. For an operation that is permitted only
+in a given state, a request in another state yields `409 REQUEST_INVALID_STATE`
+once ownership or role permits the caller to act on the request. An ownership
+failure yields `403 FORBIDDEN`.
+
+An attachment that does not actually belong to the `requestId` in the path is
+reported as `404 ATTACHMENT_NOT_FOUND`.
 
 A BFF authorization success does not bypass capability-level invariants.
 
@@ -696,6 +826,7 @@ Key fields:
 
 - `id`
 - `requester_id`
+- `requester_email`
 - `title`
 - `description`
 - `status`
@@ -704,6 +835,12 @@ Key fields:
 - `updated_at`
 
 `version` supports optimistic concurrency for state-changing operations.
+
+`requester_id` holds the identity `subject` of the creating Requester.
+`requester_email` holds the verified email address of that Requester at
+creation time and is the recipient of notification email. It is an internal
+field: it is not part of the browser-facing `Request` schema and is not written
+to ordinary logs or audit `details`.
 
 ### 19.2 `approvals`
 
@@ -833,6 +970,22 @@ conflict response rather than silently retrying a business decision.
 Notification intent is written to `outbox_deliveries` in the same local
 transaction as the business state change that caused it.
 
+### 22.1 Notified events
+
+The business transitions that record outbox deliveries are:
+
+- `REQUEST_SUBMITTED`;
+- `REQUEST_APPROVED`; and
+- `REQUEST_REJECTED`.
+
+Each of these transitions records two delivery records in the same transaction:
+one with channel `EMAIL` and one with channel `EVENT`.
+
+Creating a request, updating a draft, and adding an attachment record no outbox
+delivery in the current sample.
+
+### 22.2 Processing
+
 A background outbox processor runs within the current backend deployable.
 
 ```text
@@ -860,12 +1013,56 @@ A failed delivery remains retryable and records enough error information for
 diagnosis without storing credentials or provider response bodies containing
 private data.
 
-Retry timing is configuration-driven and bounded. The implementation policy
-shall define the concrete defaults before the processor is implemented.
+Retry timing is configuration-driven and bounded. The defaults are defined in
+[`POLICY.md`](POLICY.md).
 
 Because the result of a network call can be uncertain, duplicate external
 delivery is possible. Consumers of SNS events should use the stable outbox
 delivery identifier as an idempotency key where they require de-duplication.
+
+### 22.3 Email delivery
+
+The recipient of an `EMAIL` delivery is the persisted `requests.requester_email`
+of the request.
+
+The email payload has at least:
+
+- `to`;
+- `eventType`;
+- `requestId`;
+- `title`; and
+- `status`.
+
+The subject is fixed per event type:
+
+| `eventType` | Subject |
+| --- | --- |
+| `REQUEST_SUBMITTED` | `Request submitted` |
+| `REQUEST_APPROVED` | `Request approved` |
+| `REQUEST_REJECTED` | `Request rejected` |
+
+The body contains at least the request ID, the request title, and the current
+status. The body never contains the request description, an attachment name,
+audit `details`, a credential, or a token.
+
+### 22.4 SNS event delivery
+
+The payload of an `EVENT` delivery is a JSON object with at least:
+
+- `eventId`: the outbox delivery ID;
+- `eventType`: `REQUEST_SUBMITTED`, `REQUEST_APPROVED`, or `REQUEST_REJECTED`;
+- `occurredAt`: an RFC 3339 date-time;
+- `requestId`: the request UUID;
+- `actorId`: the identity `subject` of the acting user;
+- `fromStatus`: the request status before the transition;
+- `toStatus`: the request status after the transition; and
+- `version`: the request version after the transition.
+
+The SNS message body is this JSON payload. The SNS message attribute
+`eventType` is set to the same event type.
+
+`eventId` is a stable identifier that a downstream consumer can use as a
+de-duplication key.
 
 ## 23. Attachment flow
 
@@ -891,7 +1088,8 @@ S3 adapter -> Amazon S3
    |
    | success
    v
-insert attachment metadata in Aurora
+insert attachment metadata + ATTACHMENT_ADDED audit event
+in one Aurora transaction
 ```
 
 The object key is generated by the backend and does not contain an untrusted
@@ -1032,6 +1230,44 @@ it records.
 
 The audit event records what happened, who acted, when it happened, and the
 relevant state transition.
+
+### 27.1 Audit event types
+
+The set of audit event types is closed:
+
+- `REQUEST_CREATED`;
+- `REQUEST_UPDATED`;
+- `REQUEST_SUBMITTED`;
+- `REQUEST_APPROVED`;
+- `REQUEST_REJECTED`; and
+- `ATTACHMENT_ADDED`.
+
+### 27.2 Audited operations
+
+An audit event is created by exactly these operations:
+
+| Operation | `event_type` | `from_state` | `to_state` |
+| --- | --- | --- | --- |
+| create request | `REQUEST_CREATED` | null | `DRAFT` |
+| update draft | `REQUEST_UPDATED` | `DRAFT` | `DRAFT` |
+| submit request | `REQUEST_SUBMITTED` | `DRAFT` | `SUBMITTED` |
+| approve request | `REQUEST_APPROVED` | `SUBMITTED` | `APPROVED` |
+| reject request | `REQUEST_REJECTED` | `SUBMITTED` | `REJECTED` |
+| add attachment | `ATTACHMENT_ADDED` | current request state | same current request state |
+
+`actor_id` is the identity `subject` of the acting user.
+
+Read-only operations create no audit event in the current sample. This covers
+listing, retrieving, downloading an attachment, and reading the audit list.
+
+The `details` of `ATTACHMENT_ADDED` contain at least `attachmentId`. No audit
+`details` contain the full request payload, an email address, or binary content.
+
+Adding an attachment writes the attachment metadata and its audit event in one
+local transaction. It does not modify the request record, so the request
+`version` and `updated_at` are unchanged by it.
+
+### 27.3 Retention
 
 Audit events are append-only through normal application behavior.
 
