@@ -2,7 +2,7 @@
 
 By the end of this guide, you can:
 
-- run the complete application locally with one command, without any cloud account;
+- run the complete application locally with one command, without any cloud account or credential;
 - verify the repository on a new machine;
 - understand what is required for authenticated operation against AWS; and
 - prepare a deployed AWS environment and complete the representative end-to-end demo.
@@ -49,18 +49,40 @@ Expected: both commands exit with code 0, the workspace dependencies are install
 
 ## 4. Milestone 1: Local demo
 
-The first runnable path is fully local. It needs no AWS account, Cognito, S3, SES, SNS, Aurora, ACM, DNS, external identity provider, API key, or `.env` file. Docker runs the local PostgreSQL.
+The first runnable path is fully local. After the dependencies and the PostgreSQL container image are available, running and using the local demo requires no external account, cloud credential, or third-party service: no AWS account, Cognito, S3, SES, SNS, Aurora, ACM, DNS, external identity provider, API key, or `.env` file.
+
+"Local" is not "offline". The initial `git clone`, `npm ci`, and the first pull of the PostgreSQL Docker image need network access.
 
 ### 4.1 Run it
+
+Before you start: Node.js 24 (`nvm use` reads `.nvmrc`), and Docker with Compose v2 running. Then, from the repository root:
 
 ```sh
 npm ci
 npm run demo
 ```
 
-`npm run demo` starts PostgreSQL 17 through `compose.yaml` (bound to `127.0.0.1:55432`), generates the Prisma client, applies the migrations, and starts the backend (`APP_MODE=local`, port 3000) and the frontend (port 5173). Open `http://localhost:5173/`.
+That is all: no second terminal and no configuration. `npm run demo`:
 
-The sign-in screen offers **Continue as Requester**, **Continue as Approver**, and **Continue as Administrator**. There is no password and no external redirect. **Sign out** returns to this screen so you can switch roles.
+1. checks the prerequisites (Node.js 24, Docker, Docker Compose v2, a running Docker daemon, and free ports `127.0.0.1:5173`, `127.0.0.1:3000`, and `127.0.0.1:55432`) and stops with an explanation if one is missing;
+2. starts the local PostgreSQL 17 through `compose.yaml` and waits until it is healthy;
+3. generates the Prisma client and applies the migrations;
+4. starts the backend (`APP_MODE=local`) and the frontend;
+5. waits until the backend answers `http://127.0.0.1:3000/health/ready` and the frontend answers `http://127.0.0.1:5173/`.
+
+Only then does it print the ready message, which includes the URL and the stop and reset commands:
+
+```text
+Local demo is ready.
+
+SPA:
+  http://127.0.0.1:5173/
+...
+```
+
+Open `http://127.0.0.1:5173/` in your browser. Everything listens on `127.0.0.1` only, so nothing is reachable from your network. Use `127.0.0.1` rather than `localhost`: the frontend is bound to the IPv4 address.
+
+You should see the sign-in screen with **Continue as Requester**, **Continue as Approver**, and **Continue as Administrator**. There is no password and no external redirect. **Sign out** returns to this screen so you can switch roles.
 
 ### 4.2 What the local mode is
 
@@ -78,32 +100,94 @@ The demo tokens are not secrets and provide no real authentication. They are acc
 
 ### 4.3 Walk through it
 
-Follow the walkthrough in section 9 (Requester creates, attaches, and submits; Approver approves; Requester sees `APPROVED`; Administrator inspects the audit history), using the three role buttons instead of Cognito users. After the Requester submits and the Approver approves, the outbox worker records the messages within a few seconds; inspect them with:
+Follow the acceptance walkthrough in section 9 (Requester, then Approver, then Requester again, then Administrator), pressing the matching **Continue as** button wherever it says to sign in. Each screen is described in [`USER_GUIDE.md`, section 7](USER_GUIDE.md#7-demo-tutorial). The outbox worker records the messages a few seconds after submit and approve. Show them with:
 
 ```sh
-cat .local/deliveries/email.ndjson
-cat .local/deliveries/events.ndjson
+npm run demo:deliveries
 ```
 
-### 4.4 Stop and reset
+It prints each recorded email (timestamp, recipient, subject, body) and each recorded event (timestamp, event type, request ID, and the state transition, for example `SUBMITTED -> APPROVED`). It works on every operating system and says so plainly if nothing has been recorded yet.
 
-```sh
-npm run demo:down     # stop PostgreSQL; the data is kept
-npm run demo:reset    # remove the database volume and the .local data
-```
+### 4.4 Stop, restart, reset, and where the data lives
 
-`Ctrl+C` stops the backend and the frontend. `npm run demo` can be run again after either command.
+| You want to | Do this | What happens to the data |
+| --- | --- | --- |
+| Stop the frontend and backend | `Ctrl+C` in the terminal running `npm run demo` | Everything is kept. The PostgreSQL container keeps running. |
+| Continue later | `npm run demo` again | The existing data is used. |
+| Stop the database too | `npm run demo:down` | The container is removed. The data is kept. Running it when nothing is running is not an error. |
+| Start from a blank state | `npm run demo:reset` | The database container and volume, `.local/attachments/`, and `.local/deliveries/` are removed. It refuses to run while ports 5173 or 3000 are in use, because a demo may still be running: stop it first. |
+
+After `npm run demo:reset`, `npm run demo` starts from a blank environment. Reset never touches files tracked by Git.
+
+Where the local data lives:
+
+| Data | Location |
+| --- | --- |
+| Relational data | Docker named volume `spa-reference-demo_postgres-data` (the Compose project is named `spa-reference-demo`, so the name does not depend on the directory you cloned into) |
+| Attachments | `.local/attachments/` |
+| Mail and events | `.local/deliveries/email.ndjson` and `.local/deliveries/events.ndjson` |
+
+`.local/` is ignored by Git.
 
 ### 4.5 Milestone 1 pass criteria
 
-- [ ] `npm ci` and `npm run demo` succeed without a `.env` file or any external credential
-- [ ] `http://localhost:5173/` shows the three role buttons
-- [ ] the Requester can create a draft, attach a file, and submit
-- [ ] the Approver sees the request in **Approval Queue** and approves it
-- [ ] the Requester sees `APPROVED`
-- [ ] the Administrator sees the expected audit events
-- [ ] the submit and approve emails appear in `.local/deliveries/email.ndjson`, and the events in `.local/deliveries/events.ndjson`
-- [ ] after `npm run demo:reset`, `npm run demo` starts again from an empty state
+```text
+[ ] Local demo starts with `npm run demo`
+[ ] No `.env` or cloud credential is required
+[ ] Requester can create a DRAFT
+[ ] Requester can edit the DRAFT
+[ ] Requester can upload/list/download an attachment
+[ ] Requester can submit and see SUBMITTED
+[ ] Approver sees the request in Approval Queue
+[ ] Approver can open and approve it
+[ ] Requester can sign in again and see APPROVED
+[ ] Administrator can inspect the request
+[ ] Administrator can inspect the expected audit events
+[ ] Local email delivery record exists
+[ ] Local event delivery record exists
+```
+
+When every box is checked, you have reached **Local demo PASS**. Provider integrations on AWS are not part of this PASS; they belong to Milestone 3.
+
+### 4.6 What the local demo does and does not prove
+
+Milestone 1 proves the application workflow locally. AWS deployment is only required when you want to validate the AWS-specific adapters and the deployment topology.
+
+- Confirmed by the local demo: the SPA, the BFF, authorization, business state transitions, PostgreSQL persistence, attachments through the ObjectStorage port, outbox semantics, audit, and the mail and event delivery adapters.
+- Confirmed only on AWS (Milestone 3): Cognito, S3, SES, SNS, Aurora, ECS/Fargate, the load balancer, IAM, Secrets Manager, and the deployment topology.
+
+AWS is not a required next step for using the application.
+
+### 4.7 First-run troubleshooting
+
+| Symptom | What to do |
+| --- | --- |
+| **Node version mismatch.** `Node.js 24 is required` with the expected and actual versions. | Switch to Node.js 24 (`nvm use`), run `npm ci` again, then `npm run demo`. |
+| **Docker missing or stopped.** `the docker command was not found`, or `the Docker daemon is not running`. | Install Docker with Compose v2, or start Docker, then run `npm run demo` again. |
+| **Port in use.** The message names the port: 5173 (frontend), 3000 (backend), or 55432 (database). | Stop the process using it. A previous demo is stopped with `Ctrl+C` in its terminal; a leftover database is stopped with `npm run demo:down`. |
+| **PostgreSQL does not become healthy.** The start step fails or times out. | `docker compose ps` and `docker compose logs postgres` show why. If the data is not needed: `npm run demo:reset`, then `npm run demo`. |
+| **Migration failure.** The migration step fails with Prisma output. | The database may hold an incompatible earlier state: `npm run demo:reset`, then `npm run demo`. Migration files are in `backend/prisma/migrations/`. |
+| **Backend never becomes ready.** The wait times out or the backend exits. | Open `http://127.0.0.1:3000/health/ready` (expect `{"status":"ok"}`) and read the backend log in the terminal. Local mode needs no AWS setting; a missing AWS variable in the log means the backend was not started by `npm run demo`. |
+| **Frontend does not load.** | Open `http://127.0.0.1:5173/` (not `localhost`), and read the frontend output in the terminal. Check that port 5173 is not used by another program. |
+| **A role gets 401 or 403.** The sign-in screen says "did not accept the selection", or pages show an access error. | The backend must be in local mode (its log shows `"mode":"local"`). Select exactly the role you need with **Continue as ...**. If it persists, stop with `Ctrl+C` and run `npm run demo` again, or `npm run demo:reset`. Cognito is not involved in the local path. |
+| **Attachment or delivery record missing.** | Look under `.local/attachments/` and `.local/deliveries/`, or run `npm run demo:deliveries`. Records appear a few seconds after submit or approve. They are removed by `npm run demo:reset`. |
+
+For more depth see [`DEVELOPMENT.md`](DEVELOPMENT.md) (workflow reference) and [`OPERATIONS.md`](OPERATIONS.md) (runtime behavior and diagnostics).
+
+### 4.8 Local demo complete. What next?
+
+Choose by what you want to do.
+
+| If you want to... | Go to |
+| --- | --- |
+| **Validate the whole repository** (full engineering validation: formatting, lint, types, OpenAPI, tests, build, Prisma, CDK synthesis) | [Milestone 2, section 5](#5-milestone-2-repository-validation): `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, and the others listed there. |
+| **Start developing** (workflow, scripts, tests, and how the pieces fit while you change code) | [`DEVELOPMENT.md`](DEVELOPMENT.md) |
+| **Understand configuration** (every setting, and how local mode differs from AWS mode) | [`CONFIGURATION.md`](CONFIGURATION.md) |
+| **Inspect or change the API contract** | [`openapi/openapi.yaml`](../openapi/openapi.yaml). After editing it, regenerate and verify the client with `npm run api:generate` and `npm run api:check`. |
+| **Study the architecture** | [`BASIC_DESIGN.md`](BASIC_DESIGN.md) and [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) |
+| **Deploy to AWS** (this is where an AWS account and credentials are first needed) | [Milestone 3, section 8](#8-milestone-3-aws-deployment-and-full-end-to-end-demo) and [`DEPLOYMENT.md`](DEPLOYMENT.md) |
+| **Operate or troubleshoot a running deployment** | [`OPERATIONS.md`](OPERATIONS.md) |
+| **Learn the user workflow in detail** | [`USER_GUIDE.md`](USER_GUIDE.md) |
 
 ## 5. Milestone 2: Repository validation
 
@@ -132,7 +216,7 @@ npm run format:check
 npm run lint
 npm run typecheck
 npm run openapi:lint     # warnings are expected; errors are not
-npm test                 # needs the database from 4.1
+npm test                 # needs the database from 5.1
 npm run build
 npm run prisma:validate
 npm run synth            # CDK synthesis; needs no AWS account
@@ -143,7 +227,7 @@ npm run synth            # CDK synthesis; needs no AWS account
 Apply the committed migrations to a **new, empty** database and confirm that the result matches the schema:
 
 ```sh
-# with the optional Docker database from 4.1:
+# with the optional Docker database from 5.1:
 docker exec spa-ref-postgres psql -U postgres -c 'CREATE DATABASE spa_migrations'
 export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/spa_migrations
 npm run migrate:deploy
@@ -344,8 +428,7 @@ For each symptom: the likely cause, the first thing to check, and where to read 
 
 | Symptom | Likely cause | Check first | Read |
 | --- | --- | --- | --- |
-| `npm run demo` fails at the first step | Docker is not installed or not running. | `docker info` and `docker compose version`. | Section 4 |
-| `npm run demo` reports that port 55432, 3000, or 5173 is in use | Another process uses the port. | Stop it, or run `npm run demo:down` for a previous demo database. | Section 4 |
+| `npm run demo` stops with an explanation before starting | A prerequisite is missing: Node.js 24, Docker, Compose v2, or a free port. | The message states which and what to do. | Section 4.7 |
 | The local sign-in screen shows "did not accept the selection" | The backend is not running, or runs in `aws` mode. | The `backend started` log line shows `"mode":"local"`. | [`CONFIGURATION.md`](CONFIGURATION.md), section 1 |
 | `npm test` cannot connect to PostgreSQL | No database at `TEST_DATABASE_URL`. | Is the server running and the URL right? `psql "$TEST_DATABASE_URL" -c 'select 1'` (the default is `postgresql://postgres:postgres@localhost:5432/spa_test`). | [`DEVELOPMENT.md`](DEVELOPMENT.md), section 8 |
 | Backend exits with `Invalid configuration` | A required variable is missing or invalid. | The message lists every problem. Did you export `.env` into the shell? | [`CONFIGURATION.md`](CONFIGURATION.md), section 1 |
