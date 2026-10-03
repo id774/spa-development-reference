@@ -199,6 +199,14 @@ The frontend does not reproduce business authorization rules as a security
 boundary. It may hide or disable controls for usability, but the backend
 decides whether an operation is permitted.
 
+The UI role state of the SPA comes from `GET /api/session`. The frontend does
+not parse `cognito:groups` or other token claims to decide application roles,
+and it does not duplicate the Cognito group mapping.
+
+A browser reload reconstructs the current screen state from public GET APIs.
+No supported screen depends on a value retained only from a previous screen
+transition, an upload response, or another mutation response.
+
 The frontend consumes the generated client in `packages/api-client`. It does
 not hand-maintain a second copy of public request and response types.
 
@@ -214,12 +222,18 @@ The sample application has the following screen groups.
 - Edit Draft Request
 - Attachment management within an authorized request
 
+The Request Detail screen rediscovers the attachment metadata of the request
+through the attachment list endpoint.
+
 ### 6.2 Approver screens
 
 - Approval Queue
 - Request Review
 - Approve
 - Reject
+
+The Request Review screen rediscovers the attachment metadata of the request
+through the attachment list endpoint.
 
 ### 6.3 Administrator screens
 
@@ -276,7 +290,12 @@ The initial path families are:
 /api/requests/{requestId}/attachments/{attachmentId}
 /api/approvals
 /api/admin/audit
+/api/session
 ```
+
+The path `/api/requests/{requestId}/attachments` carries both `GET`, which lists
+the attachment metadata of a request, and `POST`, which uploads an attachment.
+`/api/session` returns the current application identity for SPA presentation.
 
 The exact methods, schemas, parameters, and status codes are defined in OpenAPI,
 not duplicated normatively in this document.
@@ -411,6 +430,10 @@ The mapping from Cognito group to application role uses exact group names:
 A user who belongs to several of these groups holds the union of the
 permissions of those roles.
 
+The BFF derives the roles. The SPA reads the roles of the current session from
+`GET /api/session`; role visibility in the frontend is presentation only, and
+the backend remains the authorization authority.
+
 An authenticated user who belongs to none of these groups holds no application
 role. Every operation that requires a role fails for that user with
 `403 FORBIDDEN`.
@@ -460,7 +483,9 @@ Cognito-specific token parsing and validation belong to the identity
 infrastructure adapter.
 
 The authoritative refinement of the authentication flow, token validation,
-verified email, SPA session, and sign-out behavior is in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) sections 6 and 7.
+verified email, SPA session, and sign-out behavior is in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) sections 6 and 7,
+and of the session API, SPA bootstrap, and browser state reconstruction in
+sections 22 and 23.
 
 ## 11. Authorization model
 
@@ -506,7 +531,9 @@ the permissions of those roles are added.
 | `POST /api/requests/{requestId}/reject` | not permitted | request in `SUBMITTED` | not permitted |
 | `POST /api/requests/{requestId}/attachments` | own request in `DRAFT` | not permitted | not permitted |
 | `GET /api/requests/{requestId}/attachments/{attachmentId}` | attachment of own request, any state | attachment of a `SUBMITTED` request | any attachment |
+| `GET /api/requests/{requestId}/attachments` | attachments of own request, any state | attachments of a `SUBMITTED` request | attachments of any request |
 | `GET /api/admin/audit` | not permitted | not permitted | permitted |
+| `GET /api/session` | permitted | permitted | permitted |
 
 "Not permitted" means `403 FORBIDDEN`. For an operation that is permitted only
 in a given state, a request in another state yields `409 REQUEST_INVALID_STATE`
@@ -517,6 +544,10 @@ An attachment that does not actually belong to the `requestId` in the path is
 reported as `404 ATTACHMENT_NOT_FOUND`.
 
 A BFF authorization success does not bypass capability-level invariants.
+
+`GET /api/session` is permitted to every authenticated caller, including a
+caller with no application role, and returns an empty role list for such a
+caller.
 
 Frontend visibility is not an authorization decision.
 
@@ -773,7 +804,9 @@ Owns:
 
 - attachment metadata;
 - association between an attachment and a request;
-- attachment authorization; and
+- attachment metadata listing for a request, in a stable order, so that
+  attachments remain discoverable after a reload;
+- attachment authorization, including list authorization; and
 - object-storage access through the object-storage port.
 
 ### 17.4 Audit
@@ -1124,6 +1157,14 @@ best-effort deletion of the just-written object. Failure of that cleanup is
 logged as an orphan-object condition and does not convert the failed attachment
 operation into success.
 
+Listing flow:
+
+The attachment metadata of a request is listed through
+`GET /api/requests/{requestId}/attachments`, with the same visibility as
+download, in the stable order `createdAt` ascending then `id` ascending. The
+list is the authoritative way to rediscover attachment identifiers after a
+reload; an upload response is never the only source of an attachment identifier.
+
 Download flow:
 
 ```text
@@ -1146,7 +1187,8 @@ BFF streams object to Browser
 The browser never receives reusable AWS credentials.
 
 The authoritative refinement of attachment acceptance, storage, upload
-finalization, and download headers is in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) section 14.
+finalization, and download headers is in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) section 14,
+and of attachment list authorization and ordering in sections 8.12 and 10.7.
 
 ## 24. AWS infrastructure adapters
 
