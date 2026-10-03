@@ -573,7 +573,9 @@ The header identifies the file and its purpose. It contains:
 - `Author: id774 (More info: https://id774.net)`;
 - `Source Code: https://github.com/id774/spa-development-reference`;
 - `License: The GPL version 3, or LGPL version 3 (Dual License).`;
-- `Contact: idnanashi@gmail.com`.
+- `Contact: idnanashi@gmail.com`;
+- a `Version History` section, except for the plain configuration files
+  described below.
 
 A directly runnable repository script, application entry point, infrastructure
 entry point, directly runnable test or evaluation entry point, or other file
@@ -585,6 +587,33 @@ For a multi-file application, supporting modules keep a concise header with the
 repository metadata and enough description to identify their role. They may
 refer to the responsible entry point or documentation instead of duplicating
 project-wide setup instructions and dependency lists.
+
+A plain configuration file, whose content is declarative settings that carry no
+logic of their own, has no meaningful per-file version and therefore carries no
+`Version History` section. It still carries the rest of the header. Such files
+are tool and runtime configuration files (for example the Vitest, Vite, ESLint,
+and Prisma CLI configuration files), the nginx configuration files, the Docker
+Compose definition, the CI workflow, and the `.env.example` sample.
+Source files, test files, scripts, Dockerfiles, the Prisma schema, and the
+OpenAPI contract are not plain configuration files and carry `Version History`.
+
+The header `Version History` is the history of that source file itself. It is a
+different scope from the repository-level `VERSIONS` file described in Section
+2.22. In the current initial baseline, the first header entry of a
+repository-authored source file is:
+
+```text
+v1.0 2026-10-03
+     Initial release.
+```
+
+A header-only, comment-only, or formatting-only correction does not
+mechanically bump the source-file version. A source-file version changes only
+when that file has an independent behavior or specification change.
+
+A repository version increase does not bump every source-file version at once,
+and a source-file version change does not automatically increase the repository
+version.
 
 When a file format requires a leading directive such as a shebang, encoding
 declaration, or other syntactically significant prefix, that directive remains
@@ -1038,21 +1067,42 @@ committed.
 
 ### 2.22 Versioning and Release State
 
-The repository has not started versioned releases.
+This repository has started repository-level versioning.
 
-Do not assign a repository version number merely because an implementation,
-documentation, design, or policy change was made.
+The authoritative repository version history is [`VERSIONS`](VERSIONS).
 
-Do not create a version-history file solely to record ordinary development
-chronology.
+The initial repository version is `v1.0`, released on `2026-10-03`.
 
-If a versioned unit is introduced later, the release policy shall identify the
-unit, version source of truth, and release process before version numbers begin
-to change.
+`doc/VERSIONS` is a release-level summary, not a raw commit log. A repository
+version is created only when the maintainer establishes a release boundary; an
+ordinary implementation, documentation, design, policy, or maintenance change
+does not receive a new repository version automatically.
 
-For one versioned unit, do not create more than one version number on the same
-`YYYY-MM-DD`. Later changes on that date are integrated into that day's single
+The first entry in `doc/VERSIONS` is `v1.0 (2026-10-03)` and contains only
+`Initial release.` Earlier development chronology is not reconstructed into the
+initial release entry.
+
+Do not create more than one repository version on the same `YYYY-MM-DD`.
+Independent changes released on the same date remain in that date's single
 version entry.
+
+The detailed entry-format rules are recorded at the end of `doc/VERSIONS` and
+are part of the repository's version-history maintenance convention.
+
+A source file's header `Version History` and the repository version history have
+different scopes. A source-file version changes only when that file has an
+independently meaningful behavior or specification change under the header
+policy. A repository release does not mechanically bump every source-file
+version, and a source-file version change does not mechanically create a
+repository release.
+
+The private npm workspace `version` fields and the OpenAPI `info.version` are
+not the authoritative repository release version. They are changed only when
+their own contract requires it, not merely because `doc/VERSIONS` changes.
+
+Recording a version in `doc/VERSIONS` does not itself create or authorize a Git
+tag or GitHub Release. A tag or GitHub Release is created only when the
+maintainer explicitly instructs that operation.
 
 ### 2.23 Primary Branch and Change Integration
 

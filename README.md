@@ -113,6 +113,7 @@ Details, including the database that the backend tests need, are in [`doc/GETTIN
 | [`doc/BASIC_DESIGN.md`](doc/BASIC_DESIGN.md) | Architecture and responsibilities |
 | [`doc/DETAILED_DESIGN.md`](doc/DETAILED_DESIGN.md) | Implementation-significant semantics |
 | [`doc/POLICY.md`](doc/POLICY.md) | Implementation and maintenance rules |
+| [`doc/VERSIONS`](doc/VERSIONS) | Repository version history |
 | [`doc/INITIAL_SETUP.md`](doc/INITIAL_SETUP.md) | How to set up a new repository this way |
 | [`openapi/openapi.yaml`](openapi/openapi.yaml) | The HTTP contract |
 | [`doc/GETTING_STARTED.md`](doc/GETTING_STARTED.md) | First clone through verification and the full demo |
