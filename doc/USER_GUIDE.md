@@ -96,13 +96,13 @@ The navigation is the union of your roles' links, and you can do everything any 
 
 ## 7. Demo tutorial
 
-A guided pass through the whole workflow on a prepared environment ([`GETTING_STARTED.md`](GETTING_STARTED.md), section 4 for the local demo or section 8 for AWS), with three accounts: a Requester, an Approver, and an Administrator. In the local demo the three accounts are the **Continue as Requester / Approver / Administrator** buttons on the sign-in screen. Each step gives the screen, the action, and what you should see.
+A guided pass through the whole workflow on a prepared environment ([`GETTING_STARTED.md`](GETTING_STARTED.md), section 4 for the local demo or section 8 for AWS), with three accounts: a Requester, an Approver, and an Administrator. How you sign in as a role depends on the mode: in the local demo, press **Continue as Requester**, **Continue as Approver**, or **Continue as Administrator** on the signed-out screen; in an AWS deployment, press **Sign in** and authenticate with an account in the corresponding Cognito group. The steps below use the local demo button names. Each step gives the screen, the action, and what you should see.
 
 ### 7.1 Requester
 
 | Screen | Action | Expected visible result |
 | --- | --- | --- |
-| Signed-out screen | Press **Sign in**; authenticate as the Requester. | You return to the application on **My Requests** ("There are no requests yet." on a fresh environment). |
+| Signed-out screen | Press **Continue as Requester**. | **My Requests** ("There are no requests yet." on a fresh environment). |
 | My Requests | Press **Create Request**. | The **Create Request** form. |
 | Create Request | Enter a title and a description; press **Create draft**. | **Request Detail** with status `DRAFT` and "No attachments". |
 | Request Detail | Under **Edit Draft Request**, change the title; press **Save draft**. | "Draft saved." and the new title. |
@@ -115,7 +115,7 @@ A guided pass through the whole workflow on a prepared environment ([`GETTING_ST
 
 | Screen | Action | Expected visible result |
 | --- | --- | --- |
-| Signed-out screen | **Sign in** as the Approver. | The **Approval Queue**. |
+| Signed-out screen | Press **Continue as Approver**. | The **Approval Queue**. |
 | Approval Queue | Find the submitted request; open it. | **Request Review** with status `SUBMITTED` and the attachment listed. |
 | Request Review | Press **Download** on the attachment. | The file is saved. |
 | Request Review | Press **Approve**, optionally type a comment, press **Confirm**. | "Request approved." and status `APPROVED`; the buttons are gone. |
@@ -127,7 +127,7 @@ To see the other outcome, repeat 7.1 and 7.2 with a second request and press **R
 
 | Screen | Action | Expected visible result |
 | --- | --- | --- |
-| Signed-out screen | **Sign in** as the Requester. | **My Requests** with your request. |
+| Signed-out screen | Press **Continue as Requester**. | **My Requests** with your request. |
 | My Requests | Open the request. | **Request Detail** with status `APPROVED`. |
 | Any page | **Sign out**. | The signed-out screen. |
 
@@ -135,7 +135,7 @@ To see the other outcome, repeat 7.1 and 7.2 with a second request and press **R
 
 | Screen | Action | Expected visible result |
 | --- | --- | --- |
-| Signed-out screen | **Sign in** as the Administrator. | **All Requests**. |
+| Signed-out screen | Press **Continue as Administrator**. | **All Requests**. |
 | All Requests | Open the request. | **Request Detail**, read-only, with the attachment and `APPROVED`. |
 | Audit | Open **Audit**; enter the request's ID and press **Filter**. | The events of that request: `REQUEST_CREATED`, `REQUEST_UPDATED`, `ATTACHMENT_ADDED`, `REQUEST_SUBMITTED`, `REQUEST_APPROVED`, newest first. |
 
