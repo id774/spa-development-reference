@@ -1,0 +1,37 @@
+// License: The GPL version 3, or LGPL version 3 (Dual License).
+import type { ReactNode } from 'react';
+
+export interface NavItem {
+  key: string;
+  label: string;
+  /** Rendered by the application so that it can use its own router link. */
+  element: ReactNode;
+}
+
+export interface AppShellProps {
+  title: string;
+  navigation: NavItem[];
+  /** Account area, for example the signed-in user and a sign-out button. */
+  account?: ReactNode;
+  children: ReactNode;
+}
+
+/** Application layout: header, navigation, and main content. */
+export function AppShell({ title, navigation, account, children }: AppShellProps) {
+  return (
+    <div className="ui-shell">
+      <header className="ui-shell__header">
+        <h1 className="ui-shell__title">{title}</h1>
+        <nav aria-label="Main" className="ui-shell__nav">
+          <ul>
+            {navigation.map((item) => (
+              <li key={item.key}>{item.element}</li>
+            ))}
+          </ul>
+        </nav>
+        {account ? <div className="ui-shell__account">{account}</div> : null}
+      </header>
+      <main className="ui-shell__main">{children}</main>
+    </div>
+  );
+}

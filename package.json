@@ -1,0 +1,43 @@
+{
+  "name": "spa-development-reference",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A public reference implementation of a transactional SPA with a BFF on AWS.",
+  "license": "GPL-3.0-or-later OR LGPL-3.0-or-later",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "frontend",
+    "backend",
+    "packages/ui",
+    "packages/api-client",
+    "infra"
+  ],
+  "scripts": {
+    "api:generate": "npm run generate -w @spa-ref/api-client",
+    "api:check": "npm run api:generate && git diff --exit-code -- packages/api-client/src/generated",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "openapi:lint": "redocly lint openapi/openapi.yaml",
+    "prisma:generate": "npm run prisma:generate -w @spa-ref/backend",
+    "prisma:validate": "npm run prisma:validate -w @spa-ref/backend",
+    "migrate:deploy": "npm run migrate:deploy -w @spa-ref/backend",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "synth": "npm run synth -w @spa-ref/infra"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@redocly/cli": "^2.57.0",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.71.0"
+  }
+}

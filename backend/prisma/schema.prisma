@@ -1,0 +1,136 @@
+// License: The GPL version 3, or LGPL version 3 (Dual License).
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RequestStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum ApprovalDecision {
+  APPROVED
+  REJECTED
+}
+
+enum AuditEventType {
+  REQUEST_CREATED
+  REQUEST_UPDATED
+  REQUEST_SUBMITTED
+  REQUEST_APPROVED
+  REQUEST_REJECTED
+  ATTACHMENT_ADDED
+}
+
+enum OutboxChannel {
+  EMAIL
+  EVENT
+}
+
+enum OutboxEventType {
+  REQUEST_SUBMITTED
+  REQUEST_APPROVED
+  REQUEST_REJECTED
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  DELIVERED
+  FAILED
+}
+
+model Request {
+  id             String        @id @db.Uuid
+  requesterId    String        @map("requester_id")
+  requesterEmail String        @map("requester_email")
+  title          String        @db.VarChar(200)
+  description    String        @db.VarChar(5000)
+  status         RequestStatus
+  version        Int
+  createdAt      DateTime      @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime      @map("updated_at") @db.Timestamptz(3)
+
+  approval    Approval?
+  attachments Attachment[]
+  auditEvents AuditEvent[]
+
+  @@index([updatedAt(sort: Desc), id])
+  @@index([requesterId, updatedAt(sort: Desc), id])
+  @@index([status, updatedAt, id])
+  @@map("requests")
+}
+
+model Approval {
+  id         String           @id @db.Uuid
+  requestId  String           @unique @map("request_id") @db.Uuid
+  approverId String           @map("approver_id")
+  decision   ApprovalDecision
+  comment    String?          @db.VarChar(2000)
+  decidedAt  DateTime         @map("decided_at") @db.Timestamptz(3)
+
+  request Request @relation(fields: [requestId], references: [id])
+
+  @@map("approvals")
+}
+
+model Attachment {
+  id         String   @id @db.Uuid
+  requestId  String   @map("request_id") @db.Uuid
+  objectKey  String   @map("object_key")
+  fileName   String   @map("file_name") @db.VarChar(255)
+  mediaType  String   @map("media_type") @db.VarChar(255)
+  sizeBytes  Int      @map("size_bytes")
+  uploadedBy String   @map("uploaded_by")
+  createdAt  DateTime @map("created_at") @db.Timestamptz(3)
+
+  request Request @relation(fields: [requestId], references: [id])
+
+  @@index([requestId, createdAt, id])
+  @@map("attachments")
+}
+
+model AuditEvent {
+  id         String          @id @db.Uuid
+  requestId  String          @map("request_id") @db.Uuid
+  eventType  AuditEventType  @map("event_type")
+  actorId    String          @map("actor_id")
+  fromState  RequestStatus?  @map("from_state")
+  toState    RequestStatus?  @map("to_state")
+  details    Json?
+  occurredAt DateTime        @map("occurred_at") @db.Timestamptz(3)
+
+  request Request @relation(fields: [requestId], references: [id])
+
+  @@index([occurredAt(sort: Desc), id])
+  @@index([requestId, occurredAt(sort: Desc), id])
+  @@map("audit_events")
+}
+
+model OutboxDelivery {
+  id             String          @id @db.Uuid
+  aggregateId    String          @map("aggregate_id") @db.Uuid
+  eventType      OutboxEventType @map("event_type")
+  channel        OutboxChannel
+  payload        Json
+  status         OutboxStatus
+  attemptCount   Int             @map("attempt_count")
+  nextAttemptAt  DateTime        @map("next_attempt_at") @db.Timestamptz(3)
+  createdAt      DateTime        @map("created_at") @db.Timestamptz(3)
+  deliveredAt    DateTime?       @map("delivered_at") @db.Timestamptz(3)
+  lastError      String?         @map("last_error") @db.VarChar(1000)
+  claimToken     String?         @map("claim_token")
+  claimedAt      DateTime?       @map("claimed_at") @db.Timestamptz(3)
+  claimExpiresAt DateTime?       @map("claim_expires_at") @db.Timestamptz(3)
+
+  @@index([status, nextAttemptAt])
+  @@index([status, claimExpiresAt])
+  @@map("outbox_deliveries")
+}

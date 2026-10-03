@@ -1,0 +1,77 @@
+// License: The GPL version 3, or LGPL version 3 (Dual License).
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  AppShell,
+  Button,
+  Dialog,
+  EmptyState,
+  ErrorMessage,
+  LoadingIndicator,
+  Notification,
+  Table,
+  TextField,
+} from './index.js';
+
+describe('ui components', () => {
+  it('renders the shell with navigation and account area', () => {
+    render(
+      <AppShell
+        title="Reference"
+        navigation={[{ key: 'a', label: 'A', element: <a href="/a">A</a> }]}
+        account={<span>me</span>}
+      >
+        content
+      </AppShell>,
+    );
+    expect(screen.getByRole('navigation', { name: 'Main' })).toHaveTextContent('A');
+    expect(screen.getByRole('main')).toHaveTextContent('content');
+    expect(screen.getByText('me')).toBeInTheDocument();
+  });
+
+  it('disables a busy button', () => {
+    render(<Button busy>Save</Button>);
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+
+  it('associates a field label, hint, and error', () => {
+    render(<TextField label="Title" hint="Short" error="Required" />);
+    const input = screen.getByLabelText('Title');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input).toHaveAccessibleDescription('Short Required');
+    expect(screen.getByRole('alert')).toHaveTextContent('Required');
+  });
+
+  it('renders a table, empty state, loading, error, and notification', () => {
+    render(
+      <>
+        <Table
+          caption="Items"
+          columns={[{ key: 'n', header: 'Name', render: (r: { n: string }) => r.n }]}
+          rows={[{ n: 'one' }]}
+          rowKey={(r) => r.n}
+        />
+        <EmptyState title="Nothing" />
+        <LoadingIndicator />
+        <ErrorMessage title="Failed" detail="Try again" reference="trace-1" />
+        <Notification>Saved</Notification>
+      </>,
+    );
+    expect(screen.getByRole('table', { name: 'Items' })).toHaveTextContent('one');
+    expect(screen.getByText('Nothing')).toBeInTheDocument();
+    expect(screen.getAllByRole('status').map((e) => e.textContent)).toEqual(['Loading…', 'Saved']);
+    expect(screen.getByRole('alert')).toHaveTextContent('Reference: trace-1');
+  });
+
+  it('closes a dialog on Escape', () => {
+    const onClose = vi.fn();
+    render(
+      <Dialog title="Confirm" onClose={onClose}>
+        body
+      </Dialog>,
+    );
+    expect(screen.getByRole('dialog', { name: 'Confirm' })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+});
