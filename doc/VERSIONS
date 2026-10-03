@@ -1,0 +1,35 @@
+spa-development-reference Repository Version History
+====================================================
+
+v1.0 (2026-10-03)
+-----------------
+- Initial release.
+
+Version History Guidelines
+==========================
+- Write one coherent change per bullet, at most two physical lines.
+- A single line at or under 80 columns is preferred whenever practical.
+  Necessary file names, command names, option names, and configuration
+  names may pass 80 columns on the bullet's one or two lines when they
+  cannot be shortened without losing meaning.
+- When a version history already exists, balance a new entry against the
+  length of the existing lines, so that the whole file stays consistent.
+  Holding to the form this file has settled on comes before the two-line,
+  80-column limit above, and leaves that limit standing wherever no such
+  form exists.
+- When an entry becomes substantially longer, omit or abstract implementation
+  details, examples, reasons, and secondary effects where possible.
+- Preserve the changed target, externally observable behavior, compatibility
+  or security impact, and important option or configuration names.
+- Combine related changes within the same version, especially changes to the
+  same file or feature.
+- Place closely related entries near each other.
+- Append an independent new change to the end of the current version entry.
+- Never create more than one repository version for the same calendar date.
+- Independent changes may use separate bullets, but they stay in that day's
+  single version entry.
+- The first entry, at the lowest version this file reaches, reads only
+  "Initial release." and nothing else.
+- Recording a repository version here does not create or require a Git tag or
+  GitHub Release. Either is created only when the maintainer explicitly asks
+  for it.
