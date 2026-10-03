@@ -290,14 +290,19 @@ The verified email is stored internally on request creation as
 When an access token is near expiry and an in-memory refresh token exists, the
 SPA may refresh the token before issuing the next business request.
 
-A refresh failure clears all in-memory tokens and moves the SPA to the
-signed-out state.
+A refresh failure clears all in-memory tokens and all UI role state, and moves
+the SPA to the signed-out state.
+
+After a successful refresh the SPA re-fetches `GET /api/session` and replaces its
+UI role state with the result, so that a change of Cognito group membership
+that is reflected in the new token is reflected in the SPA presentation.
 
 ### 7.2 BFF 401 response
 
 When the BFF returns `401 AUTHENTICATION_REQUIRED`:
 
 - clear in-memory access, refresh, and ID token values;
+- discard the UI role state obtained from `GET /api/session`;
 - navigate to `/signed-out`;
 - do not automatically retry the failed business mutation.
 
@@ -308,13 +313,17 @@ The signed-out screen provides an explicit Sign in action.
 When a protected SPA route is loaded without an in-memory access token, navigate
 to `/signed-out`.
 
+When a protected SPA route is loaded with an in-memory access token, the SPA
+bootstraps its role state with `GET /api/session` as defined in section 22
+before it renders role-dependent routes or controls.
+
 Do not silently treat stale browser UI state as authentication.
 
 ### 7.4 Explicit sign-out
 
 Explicit sign-out:
 
-1. clears all in-memory tokens first;
+1. clears all in-memory tokens and the UI role state first;
 2. clears any temporary authentication transaction state;
 3. redirects the browser to the configured Cognito logout endpoint;
 4. passes the configured app-client ID and the registered post-logout redirect
@@ -410,6 +419,29 @@ A mismatch is `404 ATTACHMENT_NOT_FOUND`.
 
 `GET /api/admin/audit` requires Administrator.
 
+### 8.11 Session read
+
+`GET /api/session` requires a valid access token and no application role.
+
+It is available to every authenticated caller, including a caller with no
+recognized application role.
+
+### 8.12 Attachment list
+
+`GET /api/requests/{requestId}/attachments` uses the same visibility as
+attachment download, applied to the addressed request:
+
+- Requester: attachments of an own request in any state;
+- Approver: attachments of a request currently in `SUBMITTED`;
+- Administrator: attachments of any request.
+
+A caller with none of the Requester, Approver, or Administrator roles receives
+`403 FORBIDDEN` before the system reveals whether the request exists.
+
+A missing request is `404 REQUEST_NOT_FOUND`.
+
+An existing request that the caller may not access is `403 FORBIDDEN`.
+
 ## 9. Request persistence and concurrency
 
 ### 9.1 IDs and timestamps
@@ -496,6 +528,10 @@ For audit queries, a cursor is bound to the `requestId` filter value.
 Changing the filter while reusing the cursor returns
 `400 VALIDATION_ERROR`.
 
+For attachment-list queries, a cursor is bound to the endpoint kind and to the
+`requestId` path value. Reusing the cursor with a different `requestId` returns
+`400 VALIDATION_ERROR`.
+
 A malformed or semantically incompatible cursor returns
 `400 VALIDATION_ERROR`.
 
@@ -542,6 +578,17 @@ Then sort by:
 
 1. `occurredAt` descending;
 2. `id` ascending.
+
+### 10.7 Attachment list order
+
+Apply the request-level authorization of section 8.12 first.
+
+Then sort the attachments of the request by:
+
+1. `createdAt` ascending;
+2. `id` ascending.
+
+The next cursor represents the last returned `(createdAt, id)` tuple.
 
 ## 11. Audit semantics
 
@@ -1208,7 +1255,117 @@ Cover:
 - audit cursor used with a changed requestId filter;
 - malformed cursor.
 
-## 22. Decisions intentionally left to implementation
+### 21.8 Session and browser-state reconstruction
+
+Cover:
+
+- `GET /api/session` returns server-derived roles in the order Requester,
+  Approver, Administrator;
+- a user with no recognized role receives `200` with an empty `roles` array;
+- the frontend bootstrap builds its role state from `GET /api/session` and does
+  not decode token claims;
+- the role state is cleared after a `401` and after sign-out;
+- a successful token refresh triggers a `GET /api/session` re-fetch;
+- a supported screen can be reconstructed after reload from GET endpoints
+  alone (see section 23).
+
+### 21.9 Attachment list
+
+Cover:
+
+- attachment-list authorization for Requester, Approver, and Administrator;
+- deterministic order by `createdAt` ascending, then `id` ascending;
+- the cursor is bound to `requestId`;
+- attachment IDs remain discoverable after reload;
+- a request or review screen reconstructs attachment metadata without an
+  upload response.
+
+## 22. Session API and SPA bootstrap
+
+### 22.1 Session API
+
+`GET /api/session` returns the current application identity as the BFF
+constructed it from the validated access token.
+
+It is the authoritative view of the caller's application roles for SPA
+presentation. The SPA does not parse `cognito:groups` or any other token claim
+to decide application roles, and it does not duplicate the Cognito group
+mapping.
+
+The response contains:
+
+- `subject`: the identity `subject`;
+- `roles`: the unique application roles of the caller, in the fixed order
+  `Requester`, `Approver`, `Administrator`; and
+- `email`: optional.
+
+A caller with no recognized Cognito group receives `200` with an empty `roles`
+array.
+
+`GET /api/session` performs no application-role check. A missing, invalid, or
+expired token returns `401 AUTHENTICATION_REQUIRED`. If token validation cannot
+proceed because the Cognito JWKS is unavailable and no usable cached key exists,
+it returns `503 IDENTITY_PROVIDER_UNAVAILABLE`.
+
+The BFF includes `email` only when a verified email is already part of the
+identity for that request. It does not call UserInfo only to serve this
+endpoint, and a UserInfo failure never fails `GET /api/session`. The SPA does
+not use `email` for role gating or for any authorization decision.
+
+### 22.2 SPA bootstrap
+
+Before the SPA enters a protected application route, it:
+
+1. checks for an in-memory access token;
+2. navigates to `/signed-out` when there is none;
+3. otherwise calls `GET /api/session`;
+4. adopts the returned `roles` as the current UI role state; and
+5. computes routes, navigation, and control visibility from that state.
+
+A `401 AUTHENTICATION_REQUIRED` from `GET /api/session` follows section 7.2.
+
+### 22.3 Authority
+
+`roles` from `GET /api/session` is for presentation only. It is never sent back
+to the BFF and is never trusted by it. On every business request the BFF derives
+identity and roles again from the validated access token.
+
+## 23. Browser state reconstruction
+
+A reloadable SPA screen shall not require transient data from a previous
+browser interaction in order to rediscover the current server-side state.
+
+The current discovery paths are:
+
+| State needed | Source |
+| --- | --- |
+| current roles | `GET /api/session` |
+| request list | `GET /api/requests` |
+| request detail | `GET /api/requests/{requestId}` |
+| approval queue | `GET /api/approvals` |
+| request attachments | `GET /api/requests/{requestId}/attachments` |
+| attachment content | attachment list metadata and the download endpoint |
+| audit history | `GET /api/admin/audit` |
+
+Upload, create, submit, approve, and reject responses may be used to update the
+current screen optimistically, but they are never the only discovery path.
+
+The frontend shall not require:
+
+- a previous upload response;
+- a previous mutation response;
+- decoded Cognito group claims; or
+- hidden in-memory identifiers that cannot be recovered from a current GET
+  endpoint
+
+in order to reconstruct a supported screen after a reload.
+
+After a successful attachment upload, the screen shows the new attachment either
+by applying the upload response and then re-fetching the attachment list, or by
+re-fetching the attachment list immediately. The upload response is not the sole
+local source of truth.
+
+## 24. Decisions intentionally left to implementation
 
 The following choices may still be made during implementation because they do
 not change the semantics defined by the authoritative specifications:

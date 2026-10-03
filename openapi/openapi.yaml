@@ -27,6 +27,7 @@ servers:
   - url: /
     description: Same origin as the single-page application (paths include `/api`).
 tags:
+  - name: Session
   - name: Requests
   - name: Approvals
   - name: Attachments
@@ -34,6 +35,33 @@ tags:
 security:
   - bearerAuth: []
 paths:
+  /api/session:
+    get:
+      operationId: getSession
+      tags: [Session]
+      summary: Get the current application session
+      description: |
+        Returns the application identity that the server derived from the
+        validated access token, for SPA navigation and screen presentation.
+        Requires a valid bearer access token and no application role. A caller
+        with no recognized role receives `200` with an empty `roles` array.
+
+        The roles are for presentation only; server-side authorization on every
+        operation remains authoritative and never relies on a value sent back
+        by the browser.
+      responses:
+        '200':
+          description: The current application session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/IdentityProviderUnavailable'
   /api/requests:
     get:
       operationId: listRequests
@@ -332,6 +360,46 @@ paths:
   /api/requests/{requestId}/attachments:
     parameters:
       - $ref: '#/components/parameters/RequestId'
+    get:
+      operationId: listAttachments
+      tags: [Attachments]
+      summary: List the attachments of a request
+      description: |
+        Lists the attachment metadata of the request, so that attachment
+        identifiers can be rediscovered at any time.
+
+        Requester: attachments of an own request, in any request state.
+        Approver: attachments of a request in `SUBMITTED` state. Administrator:
+        attachments of any request. Otherwise `403 FORBIDDEN`; a caller with none
+        of these roles receives `403` before the existence of the request is
+        revealed. A request that does not exist is `404 REQUEST_NOT_FOUND`.
+
+        Order: `createdAt` ascending, then `id` ascending. Pagination is applied
+        after the authorization check. The cursor is bound to this endpoint and to
+        the `requestId`; using it with another request is a
+        `400 VALIDATION_ERROR`.
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Attachment metadata of the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttachmentList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/IdentityProviderUnavailable'
     post:
       operationId: uploadAttachment
       tags: [Attachments]
@@ -537,9 +605,12 @@ components:
       required: false
       description: |
         Opaque cursor taken from `nextCursor` of the previous page. Clients do
-        not interpret its content. Cursors do not expire. A malformed cursor, or
-        a cursor used with a different endpoint or (for the audit list) a
-        different `requestId` filter, is a `400 VALIDATION_ERROR`. Pages are not
+        not interpret its content. Cursors do not expire. A cursor may be bound to
+        endpoint-specific filters and resource identifiers: the audit list binds
+        it to the `requestId` filter, and the attachment list binds it to the
+        `requestId` path value. A malformed cursor, or a cursor used with a
+        different endpoint or a different bound value, is a
+        `400 VALIDATION_ERROR`. Pages are not
         taken from a database snapshot: concurrent changes between page requests
         can move or skip items.
       schema:
@@ -681,6 +752,33 @@ components:
             code: INTERNAL_ERROR
             traceId: example-trace-id
   schemas:
+    SessionRole:
+      type: string
+      enum:
+        - Requester
+        - Approver
+        - Administrator
+    Session:
+      description: |
+        The current application session. The roles are derived server-side from
+        the validated Cognito access token and are for SPA presentation only;
+        server authorization remains authoritative. Roles are ordered
+        Requester, Approver, Administrator.
+      type: object
+      required: [subject, roles]
+      properties:
+        subject:
+          type: string
+          minLength: 1
+        roles:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/SessionRole'
+        email:
+          type: string
+          format: email
+          description: Present only when a verified email is already available. Not used for role gating.
     RequestStatus:
       type: string
       enum: [DRAFT, SUBMITTED, APPROVED, REJECTED]
@@ -805,6 +903,18 @@ components:
         createdAt:
           type: string
           format: date-time
+    AttachmentList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        nextCursor:
+          type: string
+          minLength: 1
+          description: Cursor for the next page. Omitted when there is no next page.
     AuditEventType:
       description: Closed set of audit event types.
       type: string
