@@ -101,7 +101,7 @@ The demo tokens are not secrets and provide no real authentication. They are acc
 
 ### 4.3 Walk through it
 
-Follow the acceptance walkthrough in section 9 (Requester, then Approver, then Requester again, then Administrator), pressing the matching **Continue as** button wherever it says to sign in. Each screen is described in [`USER_GUIDE.md`, section 7](USER_GUIDE.md#7-demo-tutorial). The outbox worker records the messages a few seconds after submit and approve. Show them with:
+Follow the acceptance walkthrough in section 9 (Requester, then Approver, then Requester again, then Administrator), pressing the matching **Continue as** button wherever it says to sign in. Each screen is described in [`USER_GUIDE.md`, section 7](USER_GUIDE.md#7-demo-tutorial). Section 13 shows each screen of a successful run. The outbox worker records the messages a few seconds after submit and approve. Show them with:
 
 ```sh
 npm run demo:deliveries
@@ -445,3 +445,79 @@ For each symptom: the likely cause, the first thing to check, and where to read 
 | `cdk deploy` cannot build image assets | Docker is not available or not running. | `docker info`. (`npm run synth` does not need Docker.) | [`DEPLOYMENT.md`](DEPLOYMENT.md), section 1 |
 | `cdk deploy` fails on the Cognito domain | `cognitoDomainPrefix` is already taken in the region. | Choose another prefix. | [`CONFIGURATION.md`](CONFIGURATION.md), section 3 |
 | The deployed host name does not resolve | DNS for `appDomain` is not set; the stack does not manage it. | A record or alias to the `LoadBalancerDnsName` output. | [`DEPLOYMENT.md`](DEPLOYMENT.md), section 4 |
+
+## 13. Screenshots of a successful local demo
+
+These screenshots show what you should see when the local demo starts and the screens change as expected. They were taken in the local demo (`http://127.0.0.1:5173/`) on a fresh database, with three requests: one approved with an attachment, one rejected, and one left as a draft. Titles, times, and request IDs on your screen will differ. Editing a draft and downloading an attachment are not shown; section 9 and [`USER_GUIDE.md`, section 7](USER_GUIDE.md#7-demo-tutorial) describe every step.
+
+### 13.1 Requester
+
+The signed-out screen, with the **LOCAL DEMO MODE** badge and one **Continue as** button per role:
+
+![Signed-out screen with Continue as Requester, Continue as Approver, and Continue as Administrator](images/getting-started/01-signed-out.png)
+
+After **Continue as Requester**, **My Requests** on a fresh environment:
+
+![My Requests showing "There are no requests yet." and Create Request](images/getting-started/02-my-requests-empty.png)
+
+**Create Request**, the form for a new draft:
+
+![Create Request form with Title, Description, and Create draft](images/getting-started/03-create-request.png)
+
+After **Create draft**, **Request Detail** with status `DRAFT`, the edit form, and the submit section:
+
+![Request Detail with status DRAFT, Edit Draft Request, and Submit for approval](images/getting-started/04-request-detail-draft.png)
+
+After **Upload**, "Attachment uploaded." and the file under **Attachments**:
+
+![Attachments listing quotation.txt after "Attachment uploaded."](images/getting-started/05-attachment-uploaded.png)
+
+After **Submit**, "Request submitted." and status `SUBMITTED`; the edit form and upload controls are gone:
+
+![Request Detail with status SUBMITTED after "Request submitted."](images/getting-started/06-request-submitted.png)
+
+**My Requests** after creating three requests, two submitted and one left as a draft:
+
+![My Requests listing one DRAFT and two SUBMITTED requests](images/getting-started/07-my-requests-list.png)
+
+### 13.2 Approver
+
+After **Continue as Approver**, the **Approval Queue** with the submitted requests, oldest first:
+
+![Approval Queue listing two SUBMITTED requests](images/getting-started/08-approval-queue.png)
+
+**Request Review** for a submitted request, with **Approve**, **Reject**, and the attachment:
+
+![Request Review with status SUBMITTED, Approve, Reject, and the attachment](images/getting-started/09-request-review.png)
+
+After **Approve**, the confirmation dialog with an optional comment:
+
+![Approve request dialog with a comment, Cancel, and Confirm](images/getting-started/10-approve-dialog.png)
+
+After **Confirm**, "Request approved." and status `APPROVED`; the decision buttons are gone:
+
+![Request Detail with status APPROVED after "Request approved."](images/getting-started/11-request-approved.png)
+
+For the second request, **Reject** opens the same dialog:
+
+![Reject request dialog with a comment, Cancel, and Confirm](images/getting-started/12-reject-dialog.png)
+
+After **Confirm**, "Request rejected." and status `REJECTED`:
+
+![Request Detail with status REJECTED after "Request rejected."](images/getting-started/13-request-rejected.png)
+
+### 13.3 Administrator
+
+After **Continue as Administrator**, **All Requests** with every request and its current state:
+
+![All Requests listing REJECTED, APPROVED, and DRAFT requests](images/getting-started/14-all-requests.png)
+
+**Audit**, without a filter: every business event, newest first, with the actor and the state transition:
+
+![Audit history listing REQUEST_CREATED, ATTACHMENT_ADDED, REQUEST_SUBMITTED, REQUEST_APPROVED, and REQUEST_REJECTED events](images/getting-started/15-audit-history.png)
+
+### 13.4 Requester, again
+
+**My Requests** with the final states:
+
+![My Requests listing REJECTED, APPROVED, and DRAFT requests](images/getting-started/16-my-requests-final.png)
