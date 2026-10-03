@@ -38,9 +38,9 @@ Node.js 24 with npm workspaces; React, TypeScript, and Vite; NestJS; Prisma with
 
 ## Quick start
 
-The first runnable path is a fully local demo. It needs no AWS account, Cognito, S3, SES, SNS, Aurora, ACM, DNS, external identity provider, API key, or `.env` file. Docker is required locally for PostgreSQL.
+The first runnable path is a fully local demo. After the dependencies and the PostgreSQL Docker image are downloaded, it needs no external account, cloud credential, or third-party service: no AWS, Cognito, S3, SES, SNS, API key, or `.env` file. (Cloning, `npm ci`, and the first image pull need network access.)
 
-Prerequisites: Node.js 24 and Docker with Compose.
+Prerequisites: Node.js 24, and Docker with Compose v2 running.
 
 ```bash
 git clone https://github.com/id774/spa-development-reference.git
@@ -49,13 +49,31 @@ npm ci
 npm run demo
 ```
 
-Then open <http://localhost:5173/> and choose **Continue as Requester**, **Continue as Approver**, or **Continue as Administrator**. Sign out to switch roles. Create a request, attach a file, submit it, approve it as the Approver, and inspect the audit history as the Administrator.
+`npm run demo` checks the prerequisites, starts PostgreSQL, applies the migrations, starts the backend and the frontend, and prints `Local demo is ready.` only when all of them answer. Then open <http://127.0.0.1:5173/>.
 
-Emails and events are recorded as local files under `.local/deliveries/`, and attachments under `.local/attachments/`. `npm run demo:down` stops PostgreSQL and keeps the data; `npm run demo:reset` removes the demo data.
+You should see a sign-in screen with **Continue as Requester**, **Continue as Approver**, and **Continue as Administrator**. Create a request, attach a file, submit it, approve it as the Approver, and inspect the audit history as the Administrator. The acceptance walkthrough and the **Local demo PASS** checklist are in [`doc/GETTING_STARTED.md`](doc/GETTING_STARTED.md#4-milestone-1-local-demo); the screens are described in [`doc/USER_GUIDE.md`](doc/USER_GUIDE.md#7-demo-tutorial).
 
-The local demo uses fixed demo identities and no real authentication. It is for learning and evaluation only and must never be exposed beyond your machine. It reuses the same application logic, HTTP API, database model, transactional outbox, and authorization as the AWS deployment; only the external infrastructure adapters differ. The AWS deployment (`APP_MODE=aws`, the default) uses Cognito and never accepts the demo tokens.
+| Command | Effect |
+| --- | --- |
+| `Ctrl+C` | Stops the frontend and backend. The database and all data are kept; `npm run demo` resumes. |
+| `npm run demo:down` | Stops the local database. The data is kept. |
+| `npm run demo:reset` | Removes all local demo data, for a blank start. |
+| `npm run demo:deliveries` | Shows the recorded emails and events. |
 
-Next steps, in [`doc/GETTING_STARTED.md`](doc/GETTING_STARTED.md): validate the repository without AWS (Milestone 2), and deploy the AWS stack (Milestone 3). To use the application, read [`doc/USER_GUIDE.md`](doc/USER_GUIDE.md).
+The local demo listens on `127.0.0.1` only, uses fixed demo identities and no real authentication, and is for learning and evaluation. It reuses the application logic, HTTP API, database model, transactional outbox, and authorization of the AWS deployment; only the external infrastructure adapters differ. The AWS deployment (`APP_MODE=aws`, the default) uses Cognito and never accepts the demo tokens.
+
+### Local demo complete. What next?
+
+| If you want to... | Go to |
+| --- | --- |
+| Validate the whole repository | [Milestone 2](doc/GETTING_STARTED.md#5-milestone-2-repository-validation), and the [Validation](#validation) table below |
+| Start developing | [`doc/DEVELOPMENT.md`](doc/DEVELOPMENT.md) |
+| Understand configuration (local and AWS mode) | [`doc/CONFIGURATION.md`](doc/CONFIGURATION.md) |
+| Inspect or change the API contract | [`openapi/openapi.yaml`](openapi/openapi.yaml), then `npm run api:generate` and `npm run api:check` |
+| Study the architecture | [`doc/BASIC_DESIGN.md`](doc/BASIC_DESIGN.md) and [`doc/DETAILED_DESIGN.md`](doc/DETAILED_DESIGN.md) |
+| Deploy to AWS (the first step that needs an AWS account and credentials) | [`doc/DEPLOYMENT.md`](doc/DEPLOYMENT.md) |
+| Operate or troubleshoot a running deployment | [`doc/OPERATIONS.md`](doc/OPERATIONS.md) |
+| Learn the user workflow in detail | [`doc/USER_GUIDE.md`](doc/USER_GUIDE.md) |
 
 ## Validation
 

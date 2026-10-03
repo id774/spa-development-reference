@@ -21,6 +21,7 @@
     "demo:backend": "node scripts/demo.mjs backend",
     "demo:down": "node scripts/demo.mjs down",
     "demo:reset": "node scripts/demo.mjs reset",
+    "demo:deliveries": "node scripts/demo-deliveries.mjs",
     "api:generate": "npm run generate -w @spa-ref/api-client",
     "api:check": "npm run api:generate && git diff --exit-code -- packages/api-client/src/generated",
     "format": "prettier --write .",
