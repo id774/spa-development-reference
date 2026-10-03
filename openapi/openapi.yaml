@@ -1,0 +1,635 @@
+openapi: 3.1.0
+info:
+  title: SPA Development Reference API
+  version: 0.1.0
+  description: |
+    Normative browser-facing HTTP contract of the SPA development reference
+    application, a generic request and approval sample.
+
+    All business endpoints require a Bearer JWT access token issued by the
+    identity provider. Expected failures use `application/problem+json` with a
+    stable application `code` and a `traceId`.
+servers:
+  - url: /
+    description: Same origin as the single-page application (paths include `/api`).
+tags:
+  - name: Requests
+  - name: Approvals
+  - name: Attachments
+  - name: Audit
+security:
+  - bearerAuth: []
+paths:
+  /api/requests:
+    get:
+      operationId: listRequests
+      tags: [Requests]
+      summary: List requests visible to the caller
+      responses:
+        '200':
+          description: Requests visible to the caller.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      operationId: createRequest
+      tags: [Requests]
+      summary: Create a request in DRAFT state
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRequestInput'
+      responses:
+        '201':
+          description: The request was created in `DRAFT` state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Request'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/requests/{requestId}:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+    get:
+      operationId: getRequest
+      tags: [Requests]
+      summary: Get a request
+      responses:
+        '200':
+          description: The request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      operationId: updateDraftRequest
+      tags: [Requests]
+      summary: Update a draft request
+      description: Only a request in `DRAFT` state can be updated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDraftRequestInput'
+      responses:
+        '200':
+          description: The updated request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Request'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/requests/{requestId}/submit:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+    post:
+      operationId: submitRequest
+      tags: [Requests]
+      summary: Submit a draft request
+      description: Transitions the request from `DRAFT` to `SUBMITTED`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VersionCommand'
+      responses:
+        '200':
+          description: The submitted request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Request'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/requests/{requestId}/approve:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+    post:
+      operationId: approveRequest
+      tags: [Approvals]
+      summary: Approve a submitted request
+      description: Transitions the request from `SUBMITTED` to `APPROVED`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionCommand'
+      responses:
+        '200':
+          description: The approved request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Request'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/requests/{requestId}/reject:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+    post:
+      operationId: rejectRequest
+      tags: [Approvals]
+      summary: Reject a submitted request
+      description: Transitions the request from `SUBMITTED` to `REJECTED`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionCommand'
+      responses:
+        '200':
+          description: The rejected request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Request'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/approvals:
+    get:
+      operationId: listApprovalQueue
+      tags: [Approvals]
+      summary: List requests awaiting a decision
+      responses:
+        '200':
+          description: Requests awaiting a decision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/requests/{requestId}/attachments:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+    post:
+      operationId: uploadAttachment
+      tags: [Attachments]
+      summary: Attach a file to a request
+      description: |
+        The maximum upload size is not fixed by this contract. It is set by
+        deployment configuration; exceeding it is reported as a `400`
+        `VALIDATION_ERROR` problem.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The file content.
+      responses:
+        '201':
+          description: The attachment was stored.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attachment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ObjectStorageUnavailable'
+  /api/requests/{requestId}/attachments/{attachmentId}:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+      - $ref: '#/components/parameters/AttachmentId'
+    get:
+      operationId: downloadAttachment
+      tags: [Attachments]
+      summary: Download an attachment
+      responses:
+        '200':
+          description: The attachment content.
+          headers:
+            Content-Disposition:
+              description: Presents the stored file name, for example `attachment; filename="example.txt"`.
+              schema:
+                type: string
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+                description: Binary content. The media type is the stored attachment media type.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ObjectStorageUnavailable'
+  /api/admin/audit:
+    get:
+      operationId: listAuditEvents
+      tags: [Audit]
+      summary: List audit events
+      parameters:
+        - name: requestId
+          in: query
+          required: false
+          description: Restrict the result to one request.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Audit events.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token issued by the identity provider.
+  parameters:
+    RequestId:
+      name: requestId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AttachmentId:
+      name: attachmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    BadRequest:
+      description: Validation failure (`VALIDATION_ERROR`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            title: Validation error
+            status: 400
+            detail: The title must be between 1 and 200 characters.
+            code: VALIDATION_ERROR
+            traceId: example-trace-id
+    Unauthorized:
+      description: Authentication is required or the token is invalid (`AUTHENTICATION_REQUIRED`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            title: Authentication required
+            status: 401
+            code: AUTHENTICATION_REQUIRED
+            traceId: example-trace-id
+    Forbidden:
+      description: The caller is not permitted to perform the operation (`FORBIDDEN`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            title: Forbidden
+            status: 403
+            code: FORBIDDEN
+            traceId: example-trace-id
+    NotFound:
+      description: The request or attachment does not exist (`REQUEST_NOT_FOUND` or `ATTACHMENT_NOT_FOUND`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            title: Request not found
+            status: 404
+            code: REQUEST_NOT_FOUND
+            traceId: example-trace-id
+    Conflict:
+      description: The request is not in a valid state for the operation (`REQUEST_INVALID_STATE`) or the supplied version is stale (`CONCURRENCY_CONFLICT`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            title: Invalid state transition
+            status: 409
+            detail: The request is not in a state that can be approved.
+            code: REQUEST_INVALID_STATE
+            traceId: example-trace-id
+    ObjectStorageUnavailable:
+      description: Object storage is unavailable (`OBJECT_STORAGE_UNAVAILABLE`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            title: Object storage unavailable
+            status: 503
+            code: OBJECT_STORAGE_UNAVAILABLE
+            traceId: example-trace-id
+    InternalError:
+      description: Unexpected implementation, database, or unclassified infrastructure failure (`INTERNAL_ERROR`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            title: Internal error
+            status: 500
+            code: INTERNAL_ERROR
+            traceId: example-trace-id
+  schemas:
+    RequestStatus:
+      type: string
+      enum: [DRAFT, SUBMITTED, APPROVED, REJECTED]
+    Request:
+      type: object
+      required: [id, requesterId, title, description, status, version, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        requesterId:
+          type: string
+          minLength: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 0
+          maxLength: 5000
+        status:
+          $ref: '#/components/schemas/RequestStatus'
+        version:
+          type: integer
+          minimum: 1
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    RequestSummary:
+      description: Summary of a request. It carries the same fields as `Request`.
+      allOf:
+        - $ref: '#/components/schemas/Request'
+    RequestList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestSummary'
+    CreateRequestInput:
+      type: object
+      required: [title, description]
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 0
+          maxLength: 5000
+    UpdateDraftRequestInput:
+      type: object
+      required: [title, description, version]
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 0
+          maxLength: 5000
+        version:
+          type: integer
+          minimum: 1
+    VersionCommand:
+      type: object
+      required: [version]
+      additionalProperties: false
+      properties:
+        version:
+          type: integer
+          minimum: 1
+    DecisionCommand:
+      type: object
+      required: [version]
+      additionalProperties: false
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        comment:
+          type: string
+          maxLength: 2000
+    Attachment:
+      type: object
+      required: [id, requestId, fileName, mediaType, sizeBytes, uploadedBy, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+          format: uuid
+        fileName:
+          type: string
+          minLength: 1
+          maxLength: 255
+        mediaType:
+          type: string
+          minLength: 1
+          maxLength: 255
+        sizeBytes:
+          type: integer
+          minimum: 0
+        uploadedBy:
+          type: string
+          minLength: 1
+        createdAt:
+          type: string
+          format: date-time
+    AuditEvent:
+      type: object
+      required: [id, requestId, eventType, actorId, occurredAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          minLength: 1
+        actorId:
+          type: string
+          minLength: 1
+        fromState:
+          oneOf:
+            - $ref: '#/components/schemas/RequestStatus'
+            - type: 'null'
+        toState:
+          oneOf:
+            - $ref: '#/components/schemas/RequestStatus'
+            - type: 'null'
+        details:
+          type: [object, 'null']
+        occurredAt:
+          type: string
+          format: date-time
+    AuditEventList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+    ErrorCode:
+      description: Stable machine-readable application error identifier.
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - AUTHENTICATION_REQUIRED
+        - FORBIDDEN
+        - REQUEST_NOT_FOUND
+        - ATTACHMENT_NOT_FOUND
+        - REQUEST_INVALID_STATE
+        - CONCURRENCY_CONFLICT
+        - OBJECT_STORAGE_UNAVAILABLE
+        - INTERNAL_ERROR
+    Problem:
+      description: |
+        Problem Details (`application/problem+json`) with stable application
+        extension fields. Status mapping: `VALIDATION_ERROR` 400,
+        `AUTHENTICATION_REQUIRED` 401, `FORBIDDEN` 403, `REQUEST_NOT_FOUND` and
+        `ATTACHMENT_NOT_FOUND` 404, `REQUEST_INVALID_STATE` and
+        `CONCURRENCY_CONFLICT` 409, `OBJECT_STORAGE_UNAVAILABLE` 503,
+        `INTERNAL_ERROR` 500.
+      type: object
+      required: [title, status, code, traceId]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          type: string
+          description: Stable application error identifier. See `ErrorCode` for the defined values.
+          examples: [REQUEST_INVALID_STATE]
+        traceId:
+          type: string
