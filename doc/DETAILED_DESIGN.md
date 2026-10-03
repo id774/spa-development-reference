@@ -2,18 +2,18 @@
 
 ## 1. Purpose
 
-This document defines implementation-significant semantics that must be fixed
-before the initial implementation of `spa-development-reference`.
+This document defines the implementation-significant semantics that govern the
+current `spa-development-reference` implementation and constrain later changes.
 
 The requirements define what the reference supports.
 The basic design defines the architecture and responsibility boundaries.
 The policy defines implementation and maintenance rules.
 OpenAPI defines the browser-facing HTTP contract.
 
-This document closes the remaining detailed-design decisions needed to
-implement those sources of truth without requiring an implementer to invent
-observable behavior, security semantics, concurrency behavior, recovery
-behavior, or provider-boundary behavior.
+This document records the detailed-design decisions required to keep observable
+behavior, security semantics, concurrency behavior, recovery behavior, and
+provider boundaries unambiguous across the current implementation and later
+maintenance.
 
 This document does not replace the other specifications and does not introduce
 future architecture into the current implementation.
@@ -40,19 +40,38 @@ before implementation continues.
 
 ## 3. Current implementation boundary
 
-The current implementation remains:
+The current implementation has a shared application core and two adapter modes.
+
+Shared application boundary:
 
 - one React and TypeScript SPA;
 - one NestJS and TypeScript backend deployable;
 - one BFF browser-facing boundary;
 - local in-process Requests, Approvals, Attachments, and Audit capabilities;
-- Aurora PostgreSQL-compatible persistence;
-- S3 object storage;
-- Cognito identity;
-- SES email;
-- SNS event publication;
-- ECS/Fargate containers behind an ALB; and
+- PostgreSQL-compatible persistence;
+- one transactional outbox;
 - deployment-time static capability routing.
+
+In `APP_MODE=aws`:
+
+- Aurora PostgreSQL-compatible persistence is the deployed database;
+- S3 provides object storage;
+- Cognito provides identity;
+- SES provides email delivery;
+- SNS provides event publication; and
+- frontend and backend run as ECS/Fargate containers behind an ALB.
+
+In `APP_MODE=local`:
+
+- PostgreSQL runs locally through the documented Compose path;
+- the fixed local identity adapter replaces Cognito;
+- local filesystem object storage replaces S3;
+- local delivery recorders replace SES and SNS; and
+- no AWS client is instantiated for those adapters.
+
+The mode changes only the external infrastructure adapters. Evaluation order,
+authorization, domain behavior, persistence semantics, audit, and outbox
+semantics remain shared.
 
 The detailed design shall not introduce a microservice, remote current
 capability, orchestrator, aggregator, service registry, distributed transaction
@@ -157,9 +176,10 @@ The approval record stores the normalized value.
 
 ## 6. Authentication identity contract
 
-## 6.1 OAuth flow
+## 6.1 AWS-mode OAuth flow
 
-The SPA uses OAuth 2.0 Authorization Code with PKCE.
+When the SPA runtime configuration uses `authMode: "cognito"` and the backend
+runs with `APP_MODE=aws`, the SPA uses OAuth 2.0 Authorization Code with PKCE.
 
 The authorization request uses:
 
@@ -225,9 +245,10 @@ No token is stored in:
 
 A page reload therefore loses the application's token state.
 
-### 6.4 Access-token validation
+### 6.4 AWS access-token validation
 
-The BFF validates the Cognito access token before a business operation.
+In `APP_MODE=aws`, the BFF validates the Cognito access token before a business
+operation.
 
 The validation requires:
 
@@ -251,13 +272,20 @@ If validation cannot proceed because no usable cached key exists and Cognito
 JWKS retrieval is unavailable, return
 `503 IDENTITY_PROVIDER_UNAVAILABLE`.
 
+In `APP_MODE=local`, this Cognito validation path is not used. Authentication is
+performed by the local identity adapter defined in section 6.1.1.
+
 ### 6.5 Application identity
 
-A validated token becomes an application identity with:
+Successful authentication becomes an application identity with:
 
-- `subject`: token `sub`;
-- `roles`: mapped from token `cognito:groups`;
-- `email`: absent until an operation explicitly requires verified email.
+- `subject`;
+- `roles`;
+- `email`, absent until an operation explicitly requires verified email.
+
+In AWS mode, `subject` comes from token `sub` and roles are mapped from
+`cognito:groups`. In local mode, the local identity adapter supplies the fixed
+subject and one role defined in section 6.1.1.
 
 The exact group mapping is:
 
@@ -276,8 +304,8 @@ A browser-supplied role value is never accepted as authorization evidence.
 
 Request creation requires the Requester identity to have a verified email.
 
-The BFF identity adapter calls the configured Cognito UserInfo endpoint with
-the validated access token.
+In AWS mode, the BFF identity adapter calls the configured Cognito UserInfo
+endpoint with the validated access token.
 
 The response is accepted only when:
 
@@ -293,6 +321,9 @@ If UserInfo is unavailable because of network or provider failure, return
 
 If the identity is authenticated but has no verified email, return
 `403 FORBIDDEN`.
+
+In local mode, no UserInfo call occurs. The local identity adapter supplies the
+verified demo email defined in section 6.1.1.
 
 The verified email is stored internally on request creation as
 `requester_email`.
@@ -666,8 +697,10 @@ Request creation, draft update, and attachment addition create no outbox row.
 
 The current email recipient is the persisted request `requester_email`.
 
-The email address is captured at request creation from verified Cognito
-UserInfo and is not re-resolved when a later transition occurs.
+The email address is captured at request creation from the verified email
+supplied by the active identity adapter and is not re-resolved when a later
+transition occurs. In AWS mode that email comes from verified Cognito UserInfo;
+in local mode it comes from the fixed local identity.
 
 ### 12.2 Email payload
 
@@ -1179,9 +1212,9 @@ Mapping:
 - provider unavailable codes -> 503
 - `INTERNAL_ERROR` -> 500
 
-## 21. Required implementation tests
+## 21. Required automated coverage
 
-The initial implementation must include automated coverage for at least the
+The current implementation must keep automated coverage for at least the
 following semantics in addition to the broader test requirements already
 defined by the basic design and policy.
 
@@ -1381,25 +1414,32 @@ by applying the upload response and then re-fetching the attachment list, or by
 re-fetching the attachment list immediately. The upload response is not the sole
 local source of truth.
 
-## 24. Decisions intentionally left to implementation
+## 24. Non-normative implementation details
 
-The following choices may still be made during implementation because they do
-not change the semantics defined by the authoritative specifications:
+The following details are intentionally not fixed as public or architectural
+semantics by this detailed design:
 
-- package manager and workspace implementation;
-- ORM or query library;
+- package-manager and workspace mechanics;
+- ORM or query-library mechanics;
 - concrete NestJS module and provider names;
 - React component and hook decomposition;
-- logging library;
+- logging-library mechanics;
 - OpenAPI generation and validation tooling;
-- test runner;
-- IaC language or framework;
+- test-runner mechanics;
+- IaC framework mechanics;
 - container base images;
 - environment-variable names;
 - private helper functions;
 - internal cursor encoding format, provided section 10 semantics are preserved;
-- batching size used by the outbox worker;
+- outbox batching configuration; and
 - AWS SDK client construction.
 
-These choices shall not alter public behavior, security, failure semantics,
-transaction boundaries, or current/future scope.
+The current v1.0 implementation makes concrete choices for these details in the
+repository source, package manifests, configuration, and build definitions.
+Those current choices are implementation facts, not permission for this
+document to describe them as still undecided.
+
+A later maintenance change may alter one of these details only when the change
+preserves the requirements, architecture, public behavior, security, failure
+semantics, transaction boundaries, and current/future scope, or when the
+authoritative specifications are deliberately changed first.

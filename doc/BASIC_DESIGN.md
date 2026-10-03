@@ -81,12 +81,22 @@ spa-development-reference/
 │   └── api-client/           client generated from the OpenAPI contract
 ├── openapi/
 │   └── openapi.yaml          normative browser-facing HTTP contract
-├── infra/                    AWS deployment definitions
+├── infra/                    AWS CDK v2 deployment definitions
+├── scripts/                  local-demo orchestration and inspection commands
+├── compose.yaml              local-demo PostgreSQL
 ├── doc/
 │   ├── REQUIREMENTS.md
 │   ├── BASIC_DESIGN.md
 │   ├── DETAILED_DESIGN.md
 │   ├── POLICY.md
+│   ├── VERSIONS
+│   ├── GETTING_STARTED.md
+│   ├── USER_GUIDE.md
+│   ├── DEVELOPMENT.md
+│   ├── CONFIGURATION.md
+│   ├── DEPLOYMENT.md
+│   ├── OPERATIONS.md
+│   ├── INITIAL_SETUP.md
 │   ├── LICENSE.md
 │   ├── COPYING
 │   └── COPYING.LESSER
@@ -95,18 +105,12 @@ spa-development-reference/
         └── ci.yml            standard CI pipeline
 ```
 
-Directories that do not yet exist are target structure, not permission to
-create them as part of a documentation-only change.
+This is the current repository ownership structure, not a target scaffold.
 
-The concrete Infrastructure as Code language is deliberately not selected by
-this basic design. `infra/` is the ownership boundary for AWS deployment
-definitions. The implementation task that introduces `infra/` shall select and
-document one IaC tool before code is added there.
+AWS Infrastructure as Code is implemented with AWS CDK v2 under `infra/`.
 
-The package manager is likewise not selected by this document. The repository
-shall use one workspace-capable Node.js package-management strategy when
-implementation begins, but the choice does not change the architecture defined
-here and must be fixed before package files are created.
+The repository uses npm workspaces from the root `package.json`, with
+`package-lock.json` as the committed dependency lockfile.
 
 ## 4. Current runtime topology
 
@@ -190,24 +194,25 @@ local topology is not a supported deployment.
 The frontend is a React and TypeScript SPA organized by application feature
 rather than by one global directory per technical artifact.
 
-Target structure:
+Current structure:
 
 ```text
 frontend/src/
 ├── app/
-│   ├── bootstrap/
-│   ├── routing/
-│   └── providers/
+│   ├── App.tsx
+│   ├── app.css
+│   └── config.ts
 ├── features/
-│   ├── requests/
+│   ├── administration/
 │   ├── approvals/
 │   ├── attachments/
-│   └── administration/
+│   └── requests/
 ├── shared/
 │   ├── auth/
-│   ├── api/
 │   ├── errors/
 │   └── state/
+├── test/
+├── test-setup.ts
 └── main.tsx
 ```
 
@@ -375,10 +380,18 @@ and retain diagnostic detail only in server-side logs.
 
 ## 10. Authentication flow
 
-The current identity provider is Amazon Cognito.
+Authentication has two current adapter modes.
 
-The browser uses OAuth 2.0 Authorization Code flow with PKCE against Cognito.
-The authorization request asks for the `openid email` scopes.
+In the AWS deployment, Amazon Cognito is the identity provider. The browser uses
+OAuth 2.0 Authorization Code flow with PKCE against Cognito, and the
+authorization request asks for the `openid email` scopes.
+
+In the local demonstration, no OAuth redirect or Cognito call occurs. The local
+identity adapter accepts only the three fixed non-secret demo bearer tokens
+defined by the detailed design and maps them to the same application identity
+contract used by the rest of the backend.
+
+The following OAuth flow applies to AWS mode:
 
 ```text
 Browser SPA
@@ -406,10 +419,10 @@ BFF
 
 The SPA does not contain a client secret.
 
-### 10.1 Access-token validation
+### 10.1 AWS access-token validation
 
-The BFF validates the bearer access token before executing an authenticated
-business operation. At minimum it verifies that:
+In AWS mode, the BFF validates the Cognito bearer access token before executing
+an authenticated business operation. At minimum it verifies that:
 
 - the signature is valid against the JWKS of the configured Cognito user pool;
 - the signing key identified by the token `kid` exists in the configured
@@ -427,19 +440,29 @@ A request whose token fails validation, or that has no token, receives
 
 The BFF does not accept an ID token as the basis for authorization.
 
+In local mode, Cognito token validation is not invoked. The local identity
+adapter accepts only the fixed demo tokens defined by the detailed design;
+unknown tokens fail with `401 AUTHENTICATION_REQUIRED`.
+
 ### 10.2 Application identity
 
-After validation the BFF passes an application identity value, not an AWS SDK
-object, to the rest of the application. The identity has:
+After authentication the BFF passes an application identity value, not an AWS
+SDK object, to the rest of the application. The identity has:
 
-- `subject`: the `sub` claim of the validated access token;
-- `roles`: the application roles derived from the `cognito:groups` claim of the
-  validated access token; and
-- `email`: a verified email address obtained as described in section 10.3,
-  where an operation needs it.
+- `subject`;
+- `roles`; and
+- `email`, where an operation needs a verified email.
 
-Roles are determined only from the validated access token. A role field supplied
-by the browser is never trusted.
+In AWS mode, `subject` comes from the validated token `sub`, roles come from the
+validated `cognito:groups` claim, and verified email is obtained as described in
+section 10.3.
+
+In local mode, the local identity adapter supplies the fixed subject, one role,
+and verified demo email defined by the detailed design.
+
+In AWS mode, roles are determined only from the validated access token. In
+local mode, roles are supplied only by the fixed local identity mapping. A role
+field supplied by the browser is never trusted in either mode.
 
 The mapping from Cognito group to application role uses exact group names:
 
@@ -462,9 +485,11 @@ role. Every operation that requires a role fails for that user with
 
 ### 10.3 Verified email
 
-The Cognito identity adapter obtains the email address by calling the Cognito
-UserInfo endpoint with the validated access token. The address becomes the
-identity `email` only when all of the following hold:
+Creating a request requires a verified email from the active identity adapter.
+
+In AWS mode, the Cognito identity adapter obtains the email address by calling
+the Cognito UserInfo endpoint with the validated access token. The address
+becomes the identity `email` only when all of the following hold:
 
 - the `sub` returned by UserInfo equals the `sub` of the validated token;
 - `email` is present and non-empty; and
@@ -477,11 +502,16 @@ A failure to reach UserInfo is reported as
 `503 IDENTITY_PROVIDER_UNAVAILABLE`; a UserInfo authentication failure is
 reported as `401 AUTHENTICATION_REQUIRED`.
 
+In local mode, no UserInfo call occurs. The local identity adapter supplies the
+fixed verified demo email associated with the selected demo identity.
+
 On request creation the verified email is stored on the request record as the
 internal field `requester_email`. It is not exposed in the browser-facing
 `Request` schema and is not written to ordinary logs or to audit `details`.
 
-### 10.4 SPA token lifecycle
+### 10.4 SPA session and token lifecycle
+
+The following refresh-token behavior applies to AWS mode.
 
 The SPA keeps the access token, and a refresh token when one is issued, in
 browser memory only. It does not store either token in `localStorage`,
@@ -500,6 +530,10 @@ which the user starts a new Authorization Code with PKCE flow, when:
 
 If a Cognito SSO session still exists, a new authorization started by the user
 may complete without prompting for credentials.
+
+In local mode, the selected demo bearer token is also held only in memory.
+There is no refresh flow and local sign-out clears the in-memory session without
+calling Cognito.
 
 Cognito-specific token parsing and validation belong to the identity
 infrastructure adapter.
@@ -580,34 +614,38 @@ section 8.
 
 The current backend is one NestJS application and one deployable container.
 
-Its logical structure is:
+Its current source structure is:
 
 ```text
 backend/src/
 ├── main.ts
+├── app.module.ts
+├── adapters.ts
+├── compose.ts
+├── create-app.ts
 ├── bff/
 │   ├── auth/
 │   ├── context/
-│   ├── routing/
+│   ├── controllers/
 │   ├── errors/
-│   └── controllers/
+│   ├── http/
+│   └── routing/
 ├── capabilities/
 │   ├── requests/
 │   ├── approvals/
 │   ├── attachments/
-│   └── audit/
+│   ├── audit/
+│   └── shared/
 ├── common/
-│   ├── config/
-│   ├── logging/
-│   ├── errors/
+├── infrastructure/
+│   ├── aws/
+│   │   ├── cognito/
+│   │   ├── s3/
+│   │   ├── ses/
+│   │   └── sns/
+│   ├── local/
 │   └── persistence/
-└── infrastructure/
-    ├── aws/
-    │   ├── cognito/
-    │   ├── s3/
-    │   ├── ses/
-    │   └── sns/
-    └── persistence/
+└── outbox/
 ```
 
 The separation is logical. All current capability targets are local and run in
@@ -1087,8 +1125,11 @@ A failed delivery remains retryable and records enough error information for
 diagnosis without storing credentials or provider response bodies containing
 private data.
 
-Retry timing is configuration-driven and bounded. The defaults are defined in
-[`POLICY.md`](POLICY.md).
+Retry timing is configuration-driven and bounded. Outbox lifecycle and recovery
+semantics are defined in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) section 13.
+The current configuration names, defaults, and validation are documented in
+[`CONFIGURATION.md`](CONFIGURATION.md) and resolved by the backend configuration
+loader.
 
 Because the result of a network call can be uncertain, duplicate external
 delivery is possible. Consumers of SNS events should use the stable outbox
@@ -1231,15 +1272,15 @@ AuditRepository
 OutboxRepository
 ```
 
-Current implementations are:
+Current implementations are selected at bootstrap by `APP_MODE`:
 
-```text
-IdentityProvider  -> Cognito adapter
-ObjectStorage     -> S3 adapter
-MailSender        -> SES adapter
-EventPublisher    -> SNS adapter
-repositories      -> Aurora persistence adapters
-```
+| Port | `aws` mode | `local` mode |
+| --- | --- | --- |
+| `IdentityProvider` | Cognito adapter | fixed local identity adapter |
+| `ObjectStorage` | S3 adapter | local filesystem adapter |
+| `MailSender` | SES adapter | local NDJSON delivery recorder |
+| `EventPublisher` | SNS adapter | local NDJSON delivery recorder |
+| repositories | PostgreSQL/Aurora-compatible persistence adapters | the same PostgreSQL-compatible persistence adapters |
 
 An AWS adapter converts provider-specific exceptions into application
 infrastructure errors before they cross the boundary.
@@ -1497,8 +1538,8 @@ with `openapi/openapi.yaml`.
 Exercise feature behavior and reusable UI behavior without treating hidden
 controls as proof of authorization.
 
-The semantics that the initial implementation must cover with automated tests
-are in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) section 21.
+The semantics that the current implementation must keep covered with automated
+tests are in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) section 21.
 
 ## 33. Current request flow
 
@@ -1515,7 +1556,8 @@ ALB
 BFF controller
    |
    +--> request context / traceId
-   +--> Cognito-backed token validation
+   +--> active identity adapter
+        (Cognito in aws mode / local demo identity in local mode)
    +--> coarse authorization
    |
    v
@@ -1542,6 +1584,10 @@ BFF response
    v
 Browser
 ```
+
+The identity step is mode-specific, but the authorization, capability dispatch,
+domain behavior, persistence, audit, and outbox path after application identity
+construction is shared.
 
 External notification delivery occurs after the transaction through the outbox
 processor.
@@ -1865,7 +1911,7 @@ as an incidental implementation detail:
    transaction.
 10. Application logging and business audit history remain separate.
 11. AWS SDK types do not become domain contracts.
-12. OpenAPI is the normative browser-facing HTTP contract once introduced.
+12. OpenAPI is the normative browser-facing HTTP contract.
 13. Current deployment is AWS only.
 14. Java, microservices, orchestration, aggregation, Azure, and Google Cloud
    remain future directions until their requirements are explicitly adopted.
