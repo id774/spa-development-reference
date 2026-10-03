@@ -40,7 +40,13 @@ Node.js 24 with npm workspaces; React, TypeScript, and Vite; NestJS; Prisma with
 
 The first runnable path is a fully local demo. After the dependencies and the PostgreSQL Docker image are downloaded, it needs no external account, cloud credential, or third-party service: no AWS, Cognito, S3, SES, SNS, API key, or `.env` file. (Cloning, `npm ci`, and the first image pull need network access.)
 
-Prerequisites: Node.js 24, and Docker with Compose v2 running.
+Prerequisites: Node.js 24 with npm, plus an operating-system-level Docker
+installation that provides Docker Engine, the `docker` CLI, and Docker Compose
+v2. Docker is not installed by `npm ci`. Before continuing, `docker --version`,
+`docker compose version`, and `docker info` must all succeed. If Docker is not
+installed or one of these checks fails, follow
+[`doc/GETTING_STARTED.md`](doc/GETTING_STARTED.md#2-clone-and-prerequisites)
+before running the demo.
 
 ```bash
 git clone https://github.com/id774/spa-development-reference.git

@@ -33,8 +33,42 @@ cd spa-development-reference
 | Git | Cloning. |
 | Node.js 24 and npm | Every milestone. `.nvmrc` selects 24. |
 | A PostgreSQL-compatible database | The automated tests in Milestone 2 (`npm test`) and the migration check. (Milestone 1 provides its own through Docker.) |
-| Docker with Compose | Milestone 1 (local PostgreSQL). Optional for Milestone 2: a disposable PostgreSQL and the image builds. |
+| Docker Engine, the `docker` CLI, and Docker Compose v2 | Milestone 1 (local PostgreSQL). Optional for Milestone 2: a disposable PostgreSQL and the image builds. This is an OS-level prerequisite; `npm ci` does not install it. |
 | An AWS account, with Cognito, Aurora, S3, SES, SNS, and ECS/Fargate through the CDK stack | Milestone 3 only. |
+
+### 2.1 Verify Docker before installing repository dependencies
+
+Docker is external software, not an npm dependency. The npm package named
+`docker` is unrelated to Docker Engine and does not satisfy this prerequisite.
+
+Install Docker for your platform from the official Docker documentation:
+
+- Docker Engine: <https://docs.docker.com/engine/install/>
+- Docker Compose: <https://docs.docker.com/compose/install/>
+
+Docker Desktop includes Docker Engine, the Docker CLI, and Docker Compose.
+On Linux, Docker Engine plus the Docker Compose plugin is sufficient.
+
+Before continuing, all three commands below must succeed for the same user that
+will run `npm run demo`:
+
+```sh
+docker --version
+docker compose version
+docker info
+```
+
+Interpret a failure as follows:
+
+- `docker: command not found` means the Docker CLI is not installed or is not on
+  `PATH`;
+- failure of `docker compose version` means Docker Compose v2 is not available;
+- failure of `docker info` means the Docker daemon is not running or the current
+  user cannot access it.
+
+Fix the Docker installation or access problem before running `npm run demo`.
+Do not try to satisfy this prerequisite by installing an npm package named
+`docker`.
 
 ## 3. Install
 
@@ -46,7 +80,14 @@ npm ci
 
 Expected: the command exits with code 0 and the workspace dependencies are installed.
 
-This is the only install step before the local demo; continue with `npm run demo` (section 4.1). It generates the Prisma client itself, so you do not need to run `npm run prisma:generate` first. Run `npm run prisma:generate` directly when you need the Prisma client in `backend/src/generated/` outside the demo, for example when working on the backend on its own or during repository validation.
+This is the only **repository dependency installation** step before the local
+demo. It does not install Node.js or Docker; those external prerequisites must
+already satisfy section 2. Continue with `npm run demo` (section 4.1).
+
+The demo generates the Prisma client itself, so you do not need to run
+`npm run prisma:generate` first. Run `npm run prisma:generate` directly when you
+need the Prisma client in `backend/src/generated/` outside the demo, for example
+when working on the backend on its own or during repository validation.
 
 ## 4. Milestone 1: Local demo
 
@@ -56,7 +97,9 @@ The first runnable path is fully local. After the dependencies and the PostgreSQ
 
 ### 4.1 Run it
 
-Before you start: Node.js 24 (`nvm use` reads `.nvmrc`), and Docker with Compose v2 running. Then, from the repository root:
+Before you start, complete the prerequisite checks in section 2: Node.js 24 must
+be active, and `docker --version`, `docker compose version`, and `docker info`
+must all succeed. Then, from the repository root:
 
 ```sh
 npm ci
@@ -65,7 +108,10 @@ npm run demo
 
 That is all: no second terminal and no configuration. `npm run demo`:
 
-1. checks the prerequisites (Node.js 24, Docker, Docker Compose v2, a running Docker daemon, and free ports `127.0.0.1:5173`, `127.0.0.1:3000`, and `127.0.0.1:55432`) and stops with an explanation if one is missing;
+1. re-checks the prerequisites (Node.js 24, the Docker CLI, Docker Compose v2,
+   access to a running Docker daemon, and free ports `127.0.0.1:5173`,
+   `127.0.0.1:3000`, and `127.0.0.1:55432`) and stops with an explanation if one
+   is missing;
 2. starts the local PostgreSQL 17 through `compose.yaml` and waits until it is healthy;
 3. generates the Prisma client and applies the migrations;
 4. starts the backend (`APP_MODE=local`) and the frontend;
