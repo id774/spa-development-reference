@@ -1,14 +1,14 @@
 # Policy: implementation and maintenance rules
 
 This document defines the repository-wide implementation and maintenance rules
-for `spa-development-reference`.
+for `spa-reference`.
 
 The policy is intentionally organized in three layers.
 
 - Section 0 states the governing principle that constrains every later rule.
 - Section 1 states general policy that remains meaningful independently of this
   repository's product, domain, language, framework, cloud, and layout.
-- Section 2 specializes those principles for `spa-development-reference`.
+- Section 2 specializes those principles for `spa-reference`.
 
 Sections 0 and 1 are repository-independent policy principles. They are not a
 template whose wording overrides repository-specific requirements. Section 2
@@ -427,11 +427,11 @@ and source-header metadata are repository-specific. They belong in the
 repository-specific policy or authoritative license documents rather than in
 this reusable General Policy.
 
-## 2. `spa-development-reference`-Specific Policy
+## 2. `spa-reference`-Specific Policy
 
 ### 2.1 Product Position and Sources of Truth
 
-`spa-development-reference` is a public reference implementation for
+`spa-reference` is a public reference implementation for
 transactional business single-page applications. It demonstrates one coherent
 way to compose React, TypeScript, NestJS, PostgreSQL-compatible persistence, and
 the current AWS services described by the requirements.
@@ -571,7 +571,7 @@ The header identifies the file and its purpose. It contains:
 - a first line naming the file and summarizing its responsibility;
 - a `Description` section with enough context to understand the file's role;
 - `Author: id774 (More info: https://id774.net)`;
-- `Source Code: https://github.com/id774/spa-development-reference`;
+- `Source Code: https://github.com/id774/spa-reference`;
 - `License: The GPL version 3, or LGPL version 3 (Dual License).`;
 - `Contact: idnanashi@gmail.com`;
 - a `Version History` section, except for the plain configuration files

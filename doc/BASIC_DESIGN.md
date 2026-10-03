@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This document describes how `spa-development-reference` is composed: the
+This document describes how `spa-reference` is composed: the
 runtime topology, application layers, responsibilities, dependency direction,
 data model, request flows, failure boundaries, and the extension points that
 preserve the future directions stated in
@@ -73,7 +73,7 @@ The design is governed by the following principles.
 The repository is a monorepo. Its top-level structure is:
 
 ```text
-spa-development-reference/
+spa-reference/
 ├── frontend/                 React + TypeScript SPA
 ├── backend/                  NestJS + TypeScript BFF and business capabilities
 ├── packages/

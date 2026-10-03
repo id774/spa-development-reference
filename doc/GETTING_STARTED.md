@@ -24,8 +24,8 @@ When you report a result, say which milestone you completed (section 11).
 ## 2. Clone and prerequisites
 
 ```sh
-git clone https://github.com/id774/spa-development-reference.git
-cd spa-development-reference
+git clone https://github.com/id774/spa-reference.git
+cd spa-reference
 ```
 
 | Need | For |

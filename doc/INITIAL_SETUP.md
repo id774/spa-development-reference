@@ -4,7 +4,7 @@
 
 This document defines the standard sequence for creating a new software
 repository based on the development approach demonstrated by
-`spa-development-reference`.
+`spa-reference`.
 
 The purpose of the sequence is to establish the authoritative documents before
 implementation begins, so that implementation work consumes specifications
