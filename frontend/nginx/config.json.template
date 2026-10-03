@@ -1,0 +1,10 @@
+{
+  "cognito": {
+    "clientId": "${COGNITO_CLIENT_ID}",
+    "authorizationEndpoint": "${COGNITO_AUTHORIZATION_ENDPOINT}",
+    "tokenEndpoint": "${COGNITO_TOKEN_ENDPOINT}",
+    "logoutEndpoint": "${COGNITO_LOGOUT_ENDPOINT}"
+  },
+  "redirectUri": "${APP_REDIRECT_URI}",
+  "postLogoutUri": "${APP_POST_LOGOUT_URI}"
+}

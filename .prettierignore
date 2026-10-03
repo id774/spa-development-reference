@@ -1,0 +1,11 @@
+node_modules
+dist
+cdk.out
+coverage
+package-lock.json
+README.md
+doc
+openapi
+backend/src/generated
+backend/prisma/migrations
+packages/api-client/src/generated
