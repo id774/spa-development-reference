@@ -21,7 +21,10 @@ export function AppShell({ title, navigation, account, children }: AppShellProps
   return (
     <div className="ui-shell">
       <header className="ui-shell__header">
-        <h1 className="ui-shell__title">{title}</h1>
+        <h1 className="ui-shell__title">
+          <span className="ui-shell__mark" aria-hidden="true" />
+          {title}
+        </h1>
         <nav aria-label="Main" className="ui-shell__nav">
           <ul>
             {navigation.map((item) => (

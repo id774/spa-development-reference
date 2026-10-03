@@ -1,4 +1,5 @@
 // License: The GPL version 3, or LGPL version 3 (Dual License).
+import { PageHeader, Panel } from '@spa-ref/ui';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../shared/auth/AuthProvider.js';
@@ -25,13 +26,20 @@ export function RequestNewPage() {
 
   return (
     <>
-      <h2>Create Request</h2>
-      <RequestForm
-        initial={{ title: '', description: '' }}
-        submitLabel="Create draft"
-        busy={busy}
-        onSubmit={(v) => void create(v)}
+      <PageHeader
+        title="Create Request"
+        description="Start with a draft. You can edit it and attach files before submitting."
       />
+      <div className="form-panel">
+        <Panel>
+          <RequestForm
+            initial={{ title: '', description: '' }}
+            submitLabel="Create draft"
+            busy={busy}
+            onSubmit={(v) => void create(v)}
+          />
+        </Panel>
+      </div>
       {failure ? <ApiErrorView error={failure} /> : null}
     </>
   );

@@ -9,6 +9,9 @@ import {
   ErrorMessage,
   LoadingIndicator,
   Notification,
+  PageHeader,
+  Panel,
+  StatusBadge,
   Table,
   TextField,
 } from './index.js';
@@ -73,5 +76,27 @@ describe('ui components', () => {
     expect(screen.getByRole('dialog', { name: 'Confirm' })).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('renders a page header, a panel, and status badges with their text', () => {
+    render(
+      <>
+        <PageHeader
+          title="Request Detail"
+          description="About"
+          badge={<StatusBadge status="APPROVED" />}
+          actions={<button type="button">Act</button>}
+        />
+        <Panel title="Overview">body</Panel>
+        <StatusBadge status="REJECTED" />
+        <StatusBadge status="UNKNOWN" />
+      </>,
+    );
+    expect(screen.getByRole('heading', { name: 'Request Detail' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Overview' })).toHaveTextContent('body');
+    expect(screen.getByRole('button', { name: 'Act' })).toBeInTheDocument();
+    expect(screen.getByText('APPROVED')).toHaveClass('ui-badge--success');
+    expect(screen.getByText('REJECTED')).toHaveClass('ui-badge--danger');
+    expect(screen.getByText('UNKNOWN')).toHaveClass('ui-badge--neutral');
   });
 });

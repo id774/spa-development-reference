@@ -1,5 +1,6 @@
 // License: The GPL version 3, or LGPL version 3 (Dual License).
 import '@spa-ref/ui/styles.css';
+import './app/app.css';
 import { ErrorMessage } from '@spa-ref/ui';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -26,9 +27,13 @@ loadRuntimeConfig().then(
   (error: unknown) =>
     // Invalid runtime configuration stops the application instead of running half configured.
     root.render(
-      <ErrorMessage
-        title="The application is not configured correctly."
-        detail={error instanceof Error ? error.message : undefined}
-      />,
+      <main className="auth-screen">
+        <div className="auth-card">
+          <ErrorMessage
+            title="The application is not configured correctly."
+            detail={error instanceof Error ? error.message : undefined}
+          />
+        </div>
+      </main>,
     ),
 );

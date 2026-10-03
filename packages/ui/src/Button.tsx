@@ -7,6 +7,11 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   busy?: boolean;
 }
 
+/** Class names of a button, so that a link can look like one without becoming one. */
+export function buttonClass(variant: ButtonProps['variant'] = 'secondary'): string {
+  return `ui-button ui-button--${variant}`;
+}
+
 export function Button({
   variant = 'secondary',
   busy = false,
@@ -21,7 +26,7 @@ export function Button({
       type={type}
       aria-busy={busy || undefined}
       disabled={disabled || busy}
-      className={['ui-button', `ui-button--${variant}`, className].filter(Boolean).join(' ')}
+      className={[buttonClass(variant), className].filter(Boolean).join(' ')}
     />
   );
 }

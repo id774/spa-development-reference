@@ -50,9 +50,11 @@ export function RequestForm({
         onChange={(e) => setDescription(e.target.value)}
         error={errors.description}
       />
-      <Button type="submit" variant="primary" busy={busy}>
-        {submitLabel}
-      </Button>
+      <div className="form-actions">
+        <Button type="submit" variant="primary" busy={busy}>
+          {submitLabel}
+        </Button>
+      </div>
     </form>
   );
 }
