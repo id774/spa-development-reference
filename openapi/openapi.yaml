@@ -12,7 +12,16 @@ info:
     the validated access token; each operation states the roles it requires.
     A caller that lacks the required role, or that is not permitted to use the
     addressed resource, receives `403 FORBIDDEN`. The Administrator role is not
-    a superuser. Expected failures use `application/problem+json` with a
+    a superuser.
+
+    Evaluation order for a business operation: authentication, coarse role,
+    structural validation (path, query, content type, body), resource lookup,
+    resource authorization, version, state. The first failing step determines
+    the response; in particular, when a supplied `version` is stale and the
+    current state is also invalid, the response is `409 CONCURRENCY_CONFLICT`.
+    An unknown path is `404 ROUTE_NOT_FOUND` and an unsupported method on a known
+    path is `405 METHOD_NOT_ALLOWED`; both are Problem responses. The detailed
+    processing semantics are defined in `doc/DETAILED_DESIGN.md`. Expected failures use `application/problem+json` with a
     stable application `code` and a `traceId`.
 servers:
   - url: /
@@ -55,6 +64,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/IdentityProviderUnavailable'
     post:
       operationId: createRequest
       tags: [Requests]
@@ -62,7 +73,10 @@ paths:
       description: |
         Requires the Requester role and a verified email address on the caller's
         identity; otherwise `403 FORBIDDEN`. The `requesterId` of the created
-        request is the caller's subject.
+        request is the caller's subject. If the identity provider's UserInfo
+        endpoint is unavailable the response is
+        `503 IDENTITY_PROVIDER_UNAVAILABLE`. The title is trimmed before
+        validation.
       requestBody:
         required: true
         content:
@@ -82,8 +96,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/IdentityProviderUnavailable'
   /api/requests/{requestId}:
     parameters:
       - $ref: '#/components/parameters/RequestId'
@@ -102,6 +120,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Request'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -110,15 +130,18 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/IdentityProviderUnavailable'
     put:
       operationId: updateDraftRequest
       tags: [Requests]
       summary: Update a draft request
       description: |
         Requires the Requester role and ownership of the request (otherwise
-        `403 FORBIDDEN`). Only a request in `DRAFT` state can be updated;
-        otherwise `409 REQUEST_INVALID_STATE`. A stale `version` is
-        `409 CONCURRENCY_CONFLICT`.
+        `403 FORBIDDEN`). A stale `version` is `409 CONCURRENCY_CONFLICT`, and
+        this takes precedence over a state error. With a matching version, only a
+        request in `DRAFT` state can be updated; otherwise
+        `409 REQUEST_INVALID_STATE`.
       requestBody:
         required: true
         content:
@@ -142,8 +165,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/IdentityProviderUnavailable'
   /api/requests/{requestId}/submit:
     parameters:
       - $ref: '#/components/parameters/RequestId'
@@ -154,9 +181,9 @@ paths:
       description: |
         Transitions the request from `DRAFT` to `SUBMITTED`. Requires the
         Requester role and ownership of the request (otherwise
-        `403 FORBIDDEN`). A request not in `DRAFT` state is
-        `409 REQUEST_INVALID_STATE`. A stale `version` is
-        `409 CONCURRENCY_CONFLICT`.
+        `403 FORBIDDEN`). A stale `version` is `409 CONCURRENCY_CONFLICT`, and
+        this takes precedence over a state error. With a matching version, a
+        request not in `DRAFT` state is `409 REQUEST_INVALID_STATE`.
       requestBody:
         required: true
         content:
@@ -180,8 +207,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/IdentityProviderUnavailable'
   /api/requests/{requestId}/approve:
     parameters:
       - $ref: '#/components/parameters/RequestId'
@@ -191,9 +222,10 @@ paths:
       summary: Approve a submitted request
       description: |
         Transitions the request from `SUBMITTED` to `APPROVED`. Requires the
-        Approver role (otherwise `403 FORBIDDEN`). A request not in `SUBMITTED`
-        state is `409 REQUEST_INVALID_STATE`. A stale `version` is
-        `409 CONCURRENCY_CONFLICT`.
+        Approver role (otherwise `403 FORBIDDEN`). A stale `version` is
+        `409 CONCURRENCY_CONFLICT`, and this takes precedence over a state
+        error. With a matching version, a request not in `SUBMITTED` state is
+        `409 REQUEST_INVALID_STATE`.
       requestBody:
         required: true
         content:
@@ -217,8 +249,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/IdentityProviderUnavailable'
   /api/requests/{requestId}/reject:
     parameters:
       - $ref: '#/components/parameters/RequestId'
@@ -228,9 +264,10 @@ paths:
       summary: Reject a submitted request
       description: |
         Transitions the request from `SUBMITTED` to `REJECTED`. Requires the
-        Approver role (otherwise `403 FORBIDDEN`). A request not in `SUBMITTED`
-        state is `409 REQUEST_INVALID_STATE`. A stale `version` is
-        `409 CONCURRENCY_CONFLICT`.
+        Approver role (otherwise `403 FORBIDDEN`). A stale `version` is
+        `409 CONCURRENCY_CONFLICT`, and this takes precedence over a state
+        error. With a matching version, a request not in `SUBMITTED` state is
+        `409 REQUEST_INVALID_STATE`.
       requestBody:
         required: true
         content:
@@ -254,8 +291,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/IdentityProviderUnavailable'
   /api/approvals:
     get:
       operationId: listApprovalQueue
@@ -286,6 +327,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/IdentityProviderUnavailable'
   /api/requests/{requestId}/attachments:
     parameters:
       - $ref: '#/components/parameters/RequestId'
@@ -296,11 +339,19 @@ paths:
       description: |
         Requires the Requester role and ownership of the request (otherwise
         `403 FORBIDDEN`). The request must be in `DRAFT` state; otherwise
-        `409 REQUEST_INVALID_STATE`.
+        `409 REQUEST_INVALID_STATE`. The state is checked again when the
+        attachment is finalized.
 
-        The maximum upload size is not fixed by this contract. It is set by
-        deployment configuration; exceeding it is reported as a `400`
-        `VALIDATION_ERROR` problem.
+        Accepted media types: `application/pdf`, `image/png`, `image/jpeg`, and
+        `text/plain`. The server validates the content against the declared
+        media type, and the file name extension must match the media type.
+        A mismatch or an unsupported type is `415 UNSUPPORTED_MEDIA_TYPE`.
+
+        The default maximum size is 10 MiB and is configurable by deployment up
+        to 100 MiB; a larger file is `413 PAYLOAD_TOO_LARGE`. A zero-byte file is
+        rejected as `400 VALIDATION_ERROR`. File names that are empty, longer than
+        255 characters, or that contain `/`, `\`, or control characters are also
+        rejected as `400 VALIDATION_ERROR`.
       requestBody:
         required: true
         content:
@@ -330,10 +381,14 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '500':
           $ref: '#/components/responses/InternalError'
         '503':
-          $ref: '#/components/responses/ObjectStorageUnavailable'
+          $ref: '#/components/responses/DependencyUnavailable'
   /api/requests/{requestId}/attachments/{attachmentId}:
     parameters:
       - $ref: '#/components/parameters/RequestId'
@@ -350,18 +405,48 @@ paths:
         `404 ATTACHMENT_NOT_FOUND`.
       responses:
         '200':
-          description: The attachment content.
+          description: The attachment content, always as a download (never inline).
           headers:
             Content-Disposition:
-              description: Presents the stored file name, for example `attachment; filename="example.txt"`.
+              description: |
+                `attachment` with a safe ASCII `filename` fallback and an
+                RFC 8187 `filename*` carrying the stored file name.
               schema:
                 type: string
+            Content-Length:
+              description: Stored attachment size in bytes.
+              schema:
+                type: integer
+                minimum: 1
+            X-Content-Type-Options:
+              description: Always `nosniff`.
+              schema:
+                type: string
+                enum: [nosniff]
+            Cache-Control:
+              description: Always `private, no-store`.
+              schema:
+                type: string
+                enum: ['private, no-store']
           content:
-            '*/*':
+            application/pdf:
               schema:
                 type: string
                 format: binary
-                description: Binary content. The media type is the stored attachment media type.
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            text/plain:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -371,7 +456,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
         '503':
-          $ref: '#/components/responses/ObjectStorageUnavailable'
+          $ref: '#/components/responses/DependencyUnavailable'
   /api/admin/audit:
     get:
       operationId: listAuditEvents
@@ -408,13 +493,19 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/IdentityProviderUnavailable'
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Access token issued by the identity provider.
+      description: |
+        Amazon Cognito access token only (an ID token is not accepted as
+        authorization evidence). The BFF validates the token and derives the
+        application roles from its `cognito:groups` claim; role values supplied
+        by the browser are never used.
   parameters:
     RequestId:
       name: requestId
@@ -446,8 +537,11 @@ components:
       required: false
       description: |
         Opaque cursor taken from `nextCursor` of the previous page. Clients do
-        not interpret its content. A malformed, invalid, or expired cursor is a
-        `400 VALIDATION_ERROR`.
+        not interpret its content. Cursors do not expire. A malformed cursor, or
+        a cursor used with a different endpoint or (for the audit list) a
+        different `requestId` filter, is a `400 VALIDATION_ERROR`. Pages are not
+        taken from a database snapshot: concurrent changes between page requests
+        can move or skip items.
       schema:
         type: string
         minLength: 1
@@ -498,7 +592,7 @@ components:
             code: REQUEST_NOT_FOUND
             traceId: example-trace-id
     Conflict:
-      description: The request is not in a valid state for the operation (`REQUEST_INVALID_STATE`) or the supplied version is stale (`CONCURRENCY_CONFLICT`).
+      description: The supplied version is stale (`CONCURRENCY_CONFLICT`, which takes precedence) or, with a matching version, the request is not in a valid state for the operation (`REQUEST_INVALID_STATE`).
       content:
         application/problem+json:
           schema:
@@ -520,6 +614,61 @@ components:
             status: 503
             code: OBJECT_STORAGE_UNAVAILABLE
             traceId: example-trace-id
+    PayloadTooLarge:
+      description: The uploaded file exceeds the configured maximum size (`PAYLOAD_TOO_LARGE`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            title: Payload too large
+            status: 413
+            code: PAYLOAD_TOO_LARGE
+            traceId: example-trace-id
+    UnsupportedMediaType:
+      description: The media type of the request body or uploaded file is not supported, or the file content or extension does not match it (`UNSUPPORTED_MEDIA_TYPE`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            title: Unsupported media type
+            status: 415
+            code: UNSUPPORTED_MEDIA_TYPE
+            traceId: example-trace-id
+    IdentityProviderUnavailable:
+      description: The identity provider needed to verify the token or the caller's email is unavailable (`IDENTITY_PROVIDER_UNAVAILABLE`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            title: Identity provider unavailable
+            status: 503
+            code: IDENTITY_PROVIDER_UNAVAILABLE
+            traceId: example-trace-id
+    DependencyUnavailable:
+      description: |
+        A required dependency is unavailable: either the identity provider
+        (`IDENTITY_PROVIDER_UNAVAILABLE`) or object storage
+        (`OBJECT_STORAGE_UNAVAILABLE`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            identityProvider:
+              value:
+                title: Identity provider unavailable
+                status: 503
+                code: IDENTITY_PROVIDER_UNAVAILABLE
+                traceId: example-trace-id
+            objectStorage:
+              value:
+                title: Object storage unavailable
+                status: 503
+                code: OBJECT_STORAGE_UNAVAILABLE
+                traceId: example-trace-id
     InternalError:
       description: Unexpected implementation, database, or unclassified infrastructure failure (`INTERNAL_ERROR`).
       content:
@@ -646,9 +795,10 @@ components:
           type: string
           minLength: 1
           maxLength: 255
+          description: One of `application/pdf`, `image/png`, `image/jpeg`, or `text/plain`.
         sizeBytes:
           type: integer
-          minimum: 0
+          minimum: 1
         uploadedBy:
           type: string
           minLength: 1
@@ -718,8 +868,13 @@ components:
         - FORBIDDEN
         - REQUEST_NOT_FOUND
         - ATTACHMENT_NOT_FOUND
+        - ROUTE_NOT_FOUND
+        - METHOD_NOT_ALLOWED
         - REQUEST_INVALID_STATE
         - CONCURRENCY_CONFLICT
+        - PAYLOAD_TOO_LARGE
+        - UNSUPPORTED_MEDIA_TYPE
+        - IDENTITY_PROVIDER_UNAVAILABLE
         - OBJECT_STORAGE_UNAVAILABLE
         - INTERNAL_ERROR
     Problem:
@@ -727,9 +882,11 @@ components:
         Problem Details (`application/problem+json`) with stable application
         extension fields. Status mapping: `VALIDATION_ERROR` 400,
         `AUTHENTICATION_REQUIRED` 401, `FORBIDDEN` 403, `REQUEST_NOT_FOUND` and
-        `ATTACHMENT_NOT_FOUND` 404, `REQUEST_INVALID_STATE` and
-        `CONCURRENCY_CONFLICT` 409, `OBJECT_STORAGE_UNAVAILABLE` 503,
-        `INTERNAL_ERROR` 500.
+        `ATTACHMENT_NOT_FOUND` 404, `ROUTE_NOT_FOUND` 404,
+        `METHOD_NOT_ALLOWED` 405, `REQUEST_INVALID_STATE` and
+        `CONCURRENCY_CONFLICT` 409, `PAYLOAD_TOO_LARGE` 413,
+        `UNSUPPORTED_MEDIA_TYPE` 415, `IDENTITY_PROVIDER_UNAVAILABLE` and
+        `OBJECT_STORAGE_UNAVAILABLE` 503, `INTERNAL_ERROR` 500.
       type: object
       required: [title, status, code, traceId]
       properties:
@@ -746,8 +903,6 @@ components:
           type: string
           format: uri-reference
         code:
-          type: string
-          description: Stable application error identifier. See `ErrorCode` for the defined values.
-          examples: [REQUEST_INVALID_STATE]
+          $ref: '#/components/schemas/ErrorCode'
         traceId:
           type: string

@@ -15,6 +15,14 @@ changing the repository belong to [`POLICY.md`](POLICY.md). The concrete
 browser-facing HTTP contract belongs to `openapi/openapi.yaml` once that file
 is introduced.
 
+Implementation-significant semantics that refine this basic design, such as the
+request-processing order, identity and session behavior, concurrency and
+recovery behavior, and attachment acceptance rules, belong to
+[`DETAILED_DESIGN.md`](DETAILED_DESIGN.md). The detailed design refines this
+document. It does not override `REQUIREMENTS.md` or the architectural
+invariants of this document, and the concrete HTTP contract remains in
+`openapi/openapi.yaml`.
+
 This document does not turn future concepts into current implementation
 requirements. Sections describing future microservices, orchestration,
 aggregation, Java, Azure, or Google Cloud define compatibility boundaries and
@@ -77,6 +85,7 @@ spa-development-reference/
 ├── doc/
 │   ├── REQUIREMENTS.md
 │   ├── BASIC_DESIGN.md
+│   ├── DETAILED_DESIGN.md
 │   ├── POLICY.md
 │   ├── LICENSE.md
 │   ├── COPYING
@@ -287,8 +296,8 @@ For each list operation, the owning capability applies, in this order:
 
 Pagination is applied only after those steps. The cursor identifies the
 position in the stable sort, is opaque to the client, and is never parsed by the
-client. A malformed, invalid, or expired cursor is a validation failure mapped
-to `VALIDATION_ERROR`.
+client. A malformed or incompatible cursor is a validation failure mapped to
+`VALIDATION_ERROR`. Cursors do not expire.
 
 The concrete query parameters, limits, response envelope, and sort order of each
 list endpoint are defined in OpenAPI.
@@ -419,8 +428,9 @@ identity `email` only when all of the following hold:
 Creating a request requires a verified email. If the condition is not met, the
 operation fails with `403 FORBIDDEN`.
 
-A failure to reach UserInfo is an unclassified infrastructure failure and is
-reported as `500 INTERNAL_ERROR`.
+A failure to reach UserInfo is reported as
+`503 IDENTITY_PROVIDER_UNAVAILABLE`; a UserInfo authentication failure is
+reported as `401 AUTHENTICATION_REQUIRED`.
 
 On request creation the verified email is stored on the request record as the
 internal field `requester_email`. It is not exposed in the browser-facing
@@ -435,19 +445,22 @@ browser memory only. It does not store either token in `localStorage`,
 Before the access token expires, the SPA attempts to refresh it when a refresh
 token is available.
 
-The SPA discards its in-memory tokens and starts a new Authorization Code
-with PKCE flow when:
+The SPA discards its in-memory tokens and moves to the signed-out state, from
+which the user starts a new Authorization Code with PKCE flow, when:
 
 - no refresh token is available;
 - a refresh attempt fails;
 - the BFF returns `401 AUTHENTICATION_REQUIRED`; or
 - the in-memory tokens are lost, for example by a page reload.
 
-If a Cognito SSO session still exists, the new authorization may complete
-without prompting the user for credentials.
+If a Cognito SSO session still exists, a new authorization started by the user
+may complete without prompting for credentials.
 
 Cognito-specific token parsing and validation belong to the identity
 infrastructure adapter.
+
+The authoritative refinement of the authentication flow, token validation,
+verified email, SPA session, and sign-out behavior is in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) sections 6 and 7.
 
 ## 11. Authorization model
 
@@ -506,6 +519,9 @@ reported as `404 ATTACHMENT_NOT_FOUND`.
 A BFF authorization success does not bypass capability-level invariants.
 
 Frontend visibility is not an authorization decision.
+
+The authoritative refinement of the authorization model is in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md)
+section 8.
 
 ## 12. Backend composition
 
@@ -953,9 +969,9 @@ SES and SNS calls are never made inside these database transactions.
 
 ## 21. Concurrency control
 
-A state-changing command carries the version observed by the caller or resolves
-the current version before mutation and performs an optimistic concurrency
-check.
+A state-changing command on a request carries the version observed by the
+caller, as defined in OpenAPI, and the capability performs an optimistic
+concurrency check against it.
 
 A transition succeeds only if the persisted version still matches the expected
 version.
@@ -964,6 +980,9 @@ Concurrent approval or rejection attempts therefore do not both commit.
 
 A concurrency conflict is exposed as a stable application error and mapped to a
 conflict response rather than silently retrying a business decision.
+
+The authoritative refinement of the processing order and of concurrency
+behavior is in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) sections 4 and 9.
 
 ## 22. Notification and event delivery
 
@@ -1064,6 +1083,9 @@ The SNS message body is this JSON payload. The SNS message attribute
 `eventId` is a stable identifier that a downstream consumer can use as a
 de-duplication key.
 
+The authoritative refinement of notification payloads and of the outbox
+lifecycle and recovery is in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) sections 12 and 13.
+
 ## 23. Attachment flow
 
 Attachments are transferred through the BFF so the browser does not directly
@@ -1123,6 +1145,9 @@ BFF streams object to Browser
 
 The browser never receives reusable AWS credentials.
 
+The authoritative refinement of attachment acceptance, storage, upload
+finalization, and download headers is in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) section 14.
+
 ## 24. AWS infrastructure adapters
 
 Application-facing ports are defined by application needs, not by AWS SDK
@@ -1180,11 +1205,13 @@ reading the process environment themselves.
 
 Secrets are injected by deployment and are never committed.
 
-This document does not prescribe the external secret-storage product. The
-deployment task must select one before production deployment definitions are
-implemented.
+The secret-storage product and the AWS resource boundary are defined in
+[`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) section 15.
 
 BFF routing configuration is immutable after bootstrap.
+
+The authoritative refinement of the required configuration and of bootstrap
+failure behavior is in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) section 16.
 
 ## 26. Logging
 
@@ -1296,6 +1323,9 @@ The ALB target-group health check uses readiness, not a business endpoint.
 Health responses do not disclose credentials, connection strings, internal host
 names, or stack traces.
 
+The authoritative refinement of liveness and readiness behavior is in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md)
+section 17.
+
 ## 29. Frontend deployment behavior
 
 The frontend build produces static assets.
@@ -1402,6 +1432,9 @@ with `openapi/openapi.yaml`.
 
 Exercise feature behavior and reusable UI behavior without treating hidden
 controls as proof of authorization.
+
+The semantics that the initial implementation must cover with automated tests
+are in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) section 21.
 
 ## 33. Current request flow
 
@@ -1560,6 +1593,9 @@ The BFF returns an internal error problem response with a `traceId`.
 The server log retains the diagnostic detail needed by an operator.
 
 The client never receives a raw stack trace.
+
+The authoritative refinement of error precedence, external-failure mapping, and
+the stable error-code set is in [`DETAILED_DESIGN.md`](DETAILED_DESIGN.md) sections 4, 18, and 20.
 
 ## 37. Current deployment and future extraction boundary
 
