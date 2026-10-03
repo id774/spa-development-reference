@@ -69,10 +69,17 @@ README and documentation completion
         |
         v
 Release-quality review
+        |
+        v
+Initial repository version record
 ```
 
 Each stage has a different responsibility. Do not merge stages merely to reduce
 the number of documents.
+
+The initial repository version is recorded only after the release-quality
+review establishes the completed baseline. Recording that version does not
+implicitly create a Git tag or GitHub Release.
 
 ## 4. Repository creation
 
@@ -512,11 +519,34 @@ Confirm that:
 - no development-only placeholder is presented as permanent behavior;
 - no future capability is accidentally presented as current;
 - no secret or private information is present;
-- license files are present and consistent; and
+- license files are present and consistent;
+- repository versioning policy and the planned initial version record are
+  consistent;
+- source-file version-history rules, when used, are consistent with the
+  repository versioning policy; and
 - repository history and pull requests contain only the intended scope.
 
 If the review finds a specification defect, correct the authoritative
 specification and the affected implementation together.
+
+### 14.1 Initial repository version record
+
+After the release-quality review passes, create or update `doc/VERSIONS` as the
+repository-level release history when this development approach is used.
+
+The initial entry records one release baseline, not the development chronology
+that led to it. The lowest entry contains only `Initial release.`.
+
+Do not create more than one repository version for the same calendar date.
+Independent changes completed on that date remain within that date's single
+repository version.
+
+Repository version history and source-file `Version History` have different
+scopes. A repository version does not mechanically bump every source file, and
+a source-file version does not mechanically create a repository release.
+
+Recording a version in `doc/VERSIONS` does not create or require a Git tag or
+GitHub Release. Either is a separate maintainer decision.
 
 ## 15. Document responsibilities
 
@@ -529,6 +559,7 @@ Keep normative responsibilities distinct.
 | `doc/BASIC_DESIGN.md` | System composition, responsibility, dependency, data and control flow |
 | Detailed-design document | Implementation-significant design not suitable for basic design |
 | `doc/POLICY.md` | Implementation and maintenance rules |
+| `doc/VERSIONS` | Repository-level version and release history |
 | OpenAPI or equivalent contract | Concrete public protocol or API |
 | Deployment / operations documents | How the implemented system is deployed and operated |
 | License documents | Legal terms |
@@ -594,6 +625,8 @@ Before declaring the initial repository baseline complete, confirm:
 - [ ] Every normative artifact referenced by another specification actually
       exists.
 - [ ] Implementation policy exists when implementation rules depend on it.
+- [ ] Repository-level version history exists when this development approach
+      uses `doc/VERSIONS`, and its initial entry matches the release baseline.
 - [ ] Required public API, protocol, schema, or data contracts exist.
 - [ ] The implementation-readiness review has no unresolved normative gap.
 - [ ] The initial implementation was produced from the authoritative documents,
@@ -604,8 +637,11 @@ Before declaring the initial repository baseline complete, confirm:
 - [ ] Supporting documentation matches the implemented system.
 - [ ] Current and future capabilities are not confused.
 - [ ] No private information or credential is present.
+- [ ] Repository version history and source-file version-history policy are
+      mutually consistent.
 - [ ] License, documentation, implementation, tests, and CI are mutually
       consistent.
 
-Only after these conditions are satisfied is the initial repository setup
+Only after these conditions are satisfied, and the initial repository version
+record has been established where applicable, is the initial repository setup
 complete.

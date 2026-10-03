@@ -359,7 +359,10 @@ deliberately changed.
 
 ## 12. Authentication and authorization
 
-Amazon Cognito is the currently supported identity service.
+Amazon Cognito is the currently supported deployed identity service.
+
+The local demonstration uses the fixed local identity mechanism defined in
+section 20.1 and does not call Cognito.
 
 The BFF is the primary client-facing authentication and authorization boundary.
 
@@ -813,8 +816,8 @@ composed without silently expanding them.
 `POLICY.md` shall describe how the repository is implemented and changed
 without silently changing the product scope defined here.
 
-The OpenAPI description shall be authoritative for the concrete browser-facing
-HTTP contract once that contract is introduced.
+The OpenAPI description is authoritative for the concrete browser-facing HTTP
+contract.
 
 When implementation and an authoritative specification disagree, the
 difference shall be resolved deliberately. An accidental implementation detail

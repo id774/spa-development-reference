@@ -267,12 +267,20 @@ This needs only the frontend:
 npm run dev -w @spa-ref/frontend
 ```
 
-Open `http://localhost:5173/`. Expected:
+Open `http://localhost:5173/`. The tracked
+`frontend/public/config.json` selects `authMode: "local"`, so the expected
+signed-out screen is the local-demo presentation:
 
-- the SPA loads and moves you to the signed-out screen (`/signed-out`);
-- the heading **You are signed out**, the text "Sign in to continue.", and a **Sign in** button are visible.
+- the SPA loads and moves you to `/signed-out`;
+- the heading **You are signed out** is visible;
+- the text **Local demo: choose a role to continue. No external service is used.** is visible;
+- **Continue as Requester**, **Continue as Approver**, and
+  **Continue as Administrator** are visible.
 
-`frontend/public/config.json` contains placeholder Cognito values (`https://auth.example.com/...`). Pressing **Sign in** sends the browser to that placeholder address, so **signing in cannot complete** in this setup. This check confirms that the UI renders with the placeholder AWS-mode configuration; it is not an authenticated end-to-end test. For a working sign-in without AWS, use the local demo (section 4).
+Because this frontend-only check does not start the backend, choosing a role
+cannot establish a session. This check proves only that the frontend starts and
+renders the tracked local-mode signed-out UI. For an end-to-end local sign-in
+and workflow, use the local demo in section 4.
 
 ## 7. Authenticated development against AWS services
 
