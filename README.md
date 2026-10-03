@@ -122,10 +122,13 @@ Details, including the database that the backend tests need, are in [`doc/GETTIN
 | [`doc/DEPLOYMENT.md`](doc/DEPLOYMENT.md) | Building and deploying the AWS stack |
 | [`doc/OPERATIONS.md`](doc/OPERATIONS.md) | Runtime behavior for operators |
 
-## Primary branch
+## Primary Branch
 
-`master`
+This repository uses `master` as its primary branch name.
+
+The name is used solely as a technical identifier, following the long-standing convention historically used by Git. It does not express or imply any association with racism, slavery, discrimination, or any political or social ideology.
 
 ## License
 
-GPL version 3, or LGPL version 3 (Dual License). See [`doc/LICENSE.md`](doc/LICENSE.md), [`doc/COPYING`](doc/COPYING), and [`doc/COPYING.LESSER`](doc/COPYING.LESSER).
+This repository is dual licensed under the [GPL version 3](https://www.gnu.org/licenses/gpl-3.0.html) or the [LGPL version 3](https://www.gnu.org/licenses/lgpl-3.0.html), at your option.
+For full details, please refer to [doc/LICENSE.md](doc/LICENSE.md). See also [doc/COPYING](doc/COPYING) and [doc/COPYING.LESSER](doc/COPYING.LESSER) for the complete license texts.
