@@ -58,11 +58,15 @@ npx cdk deploy \
 
 Replace every value with your own; omit `certificateArn` for a non-production HTTP deployment. This guide does not deploy anything itself.
 
-After the first deployment:
+After the first deployment, in this order:
 
-1. **DNS**: point `appDomain` at the `LoadBalancerDnsName` output. The stack does not manage DNS. The certificate, if any, must cover `appDomain`.
-2. **Migrate the database** (section 6).
-3. **Create users**: the user pool starts empty. Create users and add them to the `Requester`, `Approver`, or `Administrator` group (for example with `aws cognito-idp admin-create-user` and `admin-add-user-to-group` against the `UserPoolId` output). A user needs a verified email address to create requests.
+1. **Migrate the database** (section 6). Until this is done the backend answers `/health/ready` but the application cannot work.
+2. **Create users and assign groups**: the user pool starts empty. Create users and add them to the `Requester`, `Approver`, or `Administrator` group (for example with `aws cognito-idp admin-create-user` and `admin-add-user-to-group` against the `UserPoolId` output; exact commands are in [`GETTING_STARTED.md`](GETTING_STARTED.md), section 7.4). A user needs a verified email address to create requests.
+3. **DNS**: point `appDomain` at the `LoadBalancerDnsName` output. The stack does not manage DNS. The certificate, if any, must cover `appDomain`.
+4. **Open the deployed application** at `https://<appDomain>/` (`http://` without a certificate).
+5. **Continue with the demo**: [`GETTING_STARTED.md`](GETTING_STARTED.md), section 7 (Level 3) and the screen-by-screen [`USER_GUIDE.md`](USER_GUIDE.md).
+
+A successful `cdk deploy` is not a completed demo. The stack creates no demo users, no DNS records, no SES identity verification, and no SNS subscription; the demo is complete only when the Level 3 criteria in [`GETTING_STARTED.md`](GETTING_STARTED.md), section 9, pass.
 
 ## 5. HTTPS
 

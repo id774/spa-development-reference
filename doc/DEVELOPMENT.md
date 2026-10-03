@@ -1,6 +1,6 @@
 # Development guide
 
-How to run the application locally and how to validate a change. For what the application is, start from the [`README`](../README.md); for settings, see [`CONFIGURATION.md`](CONFIGURATION.md).
+The development workflow reference: how to run the application locally and how to validate a change. For first-time setup, the UI smoke check, and the end-to-end demo, start with [`GETTING_STARTED.md`](GETTING_STARTED.md); this document does not repeat that tutorial. For what the application is, see the [`README`](../README.md); for settings, see [`CONFIGURATION.md`](CONFIGURATION.md).
 
 ## 1. Prerequisites
 
@@ -76,6 +76,8 @@ npm run dev -w @spa-ref/frontend
 ```
 
 Vite serves the SPA (by default at `http://localhost:5173`) and proxies `/api` to `http://localhost:3000`, so the browser sees the same path shape as in production. The browser reads its runtime configuration from `/config.json`; in development that is `frontend/public/config.json`, which holds placeholder values. To sign in locally, point it at a real Cognito app client (callback URL `http://localhost:5173/auth/callback`, sign-out URL `http://localhost:5173/signed-out`) and run the backend with the matching `COGNITO_*` values. See [`CONFIGURATION.md`](CONFIGURATION.md), section 2.
+
+What the screens do for each role is described in [`USER_GUIDE.md`](USER_GUIDE.md).
 
 That file is served to browsers, so it must never contain a secret: the SPA is a public client, and tokens are kept in browser memory only. Do not commit local edits of it.
 
