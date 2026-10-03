@@ -1,4 +1,5 @@
 {
+  "authMode": "cognito",
   "cognito": {
     "clientId": "${COGNITO_CLIENT_ID}",
     "authorizationEndpoint": "${COGNITO_AUTHORIZATION_ENDPOINT}",

@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     // Development proxy that preserves the production browser API path shape.
-    proxy: { '/api': 'http://localhost:3000' },
+    proxy: { '/api': 'http://127.0.0.1:3000' },
   },
   test: {
     globals: true,

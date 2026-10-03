@@ -14,7 +14,7 @@ export interface paths {
         /**
          * Get the current application session
          * @description Returns the application identity that the server derived from the
-         *     validated access token, for SPA navigation and screen presentation.
+         *     validated bearer token, for SPA navigation and screen presentation.
          *     Requires a valid bearer access token and no application role. A caller
          *     with no recognized role receives `200` with an empty `roles` array.
          *

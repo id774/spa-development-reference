@@ -6,3 +6,5 @@
 backend/src/generated
 .env
 .env.*
+.local
+compose.yaml

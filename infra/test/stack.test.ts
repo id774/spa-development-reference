@@ -68,6 +68,17 @@ describe('infrastructure', () => {
     expect(definitions).toContain('DB_PASSWORD');
   });
 
+  it('runs every backend task in the aws application mode, never the local demo mode', () => {
+    const tasks = Object.values(template.findResources('AWS::ECS::TaskDefinition'));
+    const backendTasks = tasks.filter((task) => JSON.stringify(task).includes('COGNITO_ISSUER'));
+    expect(backendTasks).toHaveLength(2);
+    for (const task of backendTasks) {
+      const serialized = JSON.stringify(task);
+      expect(serialized).toContain('{"Name":"APP_MODE","Value":"aws"}');
+      expect(serialized).not.toContain('"Value":"local"');
+    }
+  });
+
   it('defines a separate one-off migration task', () => {
     const tasks = Object.values(template.findResources('AWS::ECS::TaskDefinition'));
     const migrate = tasks.filter((task) => JSON.stringify(task).includes('migrate:deploy'));

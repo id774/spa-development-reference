@@ -1,6 +1,18 @@
 // License: The GPL version 3, or LGPL version 3 (Dual License).
 import { describe, expect, it } from 'vitest';
-import { ConfigError, loadConfig } from '../src/common/config.js';
+import { ConfigError, loadConfig, type AwsConfig, type LocalConfig } from '../src/common/config.js';
+
+function aws(env: Record<string, string | undefined>): AwsConfig {
+  const config = loadConfig(env);
+  if (config.mode !== 'aws') throw new Error('expected aws mode');
+  return config;
+}
+
+function local(env: Record<string, string | undefined>): LocalConfig {
+  const config = loadConfig(env);
+  if (config.mode !== 'local') throw new Error('expected local mode');
+  return config;
+}
 
 const valid = {
   DATABASE_URL: 'postgresql://u:p@localhost:5432/db',
@@ -15,7 +27,7 @@ const valid = {
 
 describe('configuration', () => {
   it('resolves defaults from DETAILED_DESIGN and POLICY', () => {
-    const config = loadConfig(valid);
+    const config = aws(valid);
     expect(config.attachments.maxBytes).toBe(10 * 1024 * 1024);
     expect(config.outbox).toMatchObject({
       pollIntervalMs: 5000,
@@ -38,7 +50,7 @@ describe('configuration', () => {
 
   it('builds the database URL from parts and encodes credentials', () => {
     const { DATABASE_URL: _ignored, ...rest } = valid;
-    const config = loadConfig({
+    const config = aws({
       ...rest,
       DB_HOST: 'db.internal',
       DB_NAME: 'spa',
@@ -49,7 +61,7 @@ describe('configuration', () => {
   });
 
   it('allows deployment overrides', () => {
-    const config = loadConfig({
+    const config = aws({
       ...valid,
       ATTACHMENT_MAX_BYTES: '104857600',
       OUTBOX_MAX_ATTEMPTS: '3',
@@ -78,5 +90,69 @@ describe('configuration', () => {
 
   it('fails bootstrap when required settings are missing, listing every problem', () => {
     expect(() => loadConfig({})).toThrow(/DATABASE_URL[\s\S]*COGNITO_ISSUER[\s\S]*S3_BUCKET/);
+  });
+
+  describe('runtime mode', () => {
+    it('defaults to aws, so a forgotten APP_MODE never enables the demo identity', () => {
+      expect(loadConfig(valid).mode).toBe('aws');
+      expect(() => loadConfig({})).toThrow(/COGNITO_ISSUER/);
+    });
+
+    it('requires no AWS or Cognito value in local mode and needs no .env', () => {
+      const config = local({ APP_MODE: 'local' });
+      expect(config.mode).toBe('local');
+      expect(config.database.url).toBe(
+        'postgresql://postgres:postgres@127.0.0.1:55432/spa_reference',
+      );
+      expect(config.local.dataDir).toBe('../.local');
+      expect(config.http.host).toBe('127.0.0.1'); // loopback only, because demo tokens are accepted
+      expect(config).not.toHaveProperty('cognito');
+      expect(config).not.toHaveProperty('s3');
+    });
+
+    it('honors explicit local settings', () => {
+      const config = local({
+        APP_MODE: 'local',
+        DATABASE_URL: 'postgresql://u:p@localhost:5432/x',
+        LOCAL_DATA_DIR: '/tmp/demo',
+        HOST: '0.0.0.0',
+      });
+      expect(config.database.url).toBe('postgresql://u:p@localhost:5432/x');
+      expect(config.local.dataDir).toBe('/tmp/demo');
+      expect(config.http.host).toBe('0.0.0.0');
+    });
+
+    it('still validates the shared settings in local mode', () => {
+      expect(() => local({ APP_MODE: 'local', ATTACHMENT_MAX_BYTES: '0' })).toThrow(ConfigError);
+      expect(() => local({ APP_MODE: 'local', CAPABILITY_AUDIT_MODE: 'remote' })).toThrow(
+        ConfigError,
+      );
+    });
+
+    it('rejects an unknown mode', () => {
+      expect(() => loadConfig({ ...valid, APP_MODE: 'demo' })).toThrow(/APP_MODE/);
+      expect(() => loadConfig({ ...valid, APP_MODE: '' })).toThrow(/APP_MODE/);
+    });
+
+    it('keeps requiring every AWS value in aws mode and never falls back to local', () => {
+      for (const name of [
+        'COGNITO_ISSUER',
+        'COGNITO_CLIENT_ID',
+        'COGNITO_USERINFO_ENDPOINT',
+        'AWS_REGION',
+        'S3_BUCKET',
+        'SES_SENDER',
+        'SNS_TOPIC_ARN',
+      ]) {
+        const { [name]: _removed, ...rest } = valid as Record<string, string>;
+        expect(() => loadConfig({ ...rest, APP_MODE: 'aws' }), name).toThrow(new RegExp(name));
+      }
+      expect(() => loadConfig({ APP_MODE: 'aws' })).toThrow(ConfigError);
+    });
+
+    it('requires an explicit database in aws mode', () => {
+      const { DATABASE_URL: _ignored, ...rest } = valid;
+      expect(() => loadConfig(rest)).toThrow(/DATABASE_URL/);
+    });
   });
 });

@@ -3,11 +3,12 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { vi } from 'vitest';
 import { App } from '../app/App.js';
-import type { RuntimeConfig } from '../app/config.js';
+import type { CognitoRuntimeConfig, RuntimeConfig } from '../app/config.js';
 import { AuthProvider, type BrowserPort } from '../shared/auth/AuthProvider.js';
 import type { FakeBackend } from './fake-backend.js';
 
-export const config: RuntimeConfig = {
+export const config: CognitoRuntimeConfig = {
+  authMode: 'cognito',
   cognito: {
     clientId: 'client-1',
     authorizationEndpoint: 'https://auth.example.com/oauth2/authorize',
@@ -51,10 +52,12 @@ export function createHarness(backend: FakeBackend): Harness {
   };
 }
 
-export function renderApp(harness: Harness, path: string) {
+export const localConfig: RuntimeConfig = { authMode: 'local' };
+
+export function renderApp(harness: Harness, path: string, appConfig: RuntimeConfig = config) {
   return render(
     <AuthProvider
-      config={config}
+      config={appConfig}
       browser={harness.browser}
       fetchImpl={harness.backend.fetch as typeof fetch}
       now={() => harness.clock.now}

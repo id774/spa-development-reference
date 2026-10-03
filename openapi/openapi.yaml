@@ -6,10 +6,13 @@ info:
     Normative browser-facing HTTP contract of the SPA development reference
     application, a generic request and approval sample.
 
-    All business endpoints require a Bearer JWT access token issued by the
-    identity provider. The application role of the caller (Requester,
-    Approver, or Administrator) is derived from the `cognito:groups` claim of
-    the validated access token; each operation states the roles it requires.
+    All business endpoints require a Bearer access token. In the AWS
+    deployment (`APP_MODE=aws`) it is a JWT access token issued by Amazon
+    Cognito and the application role of the caller (Requester, Approver, or
+    Administrator) is derived from the `cognito:groups` claim of the validated
+    token. In the local demo (`APP_MODE=local`) it is one of three fixed demo
+    tokens and the backend maps each to one role. In both modes the roles are
+    derived by the server, and each operation states the roles it requires.
     A caller that lacks the required role, or that is not permitted to use the
     addressed resource, receives `403 FORBIDDEN`. The Administrator role is not
     a superuser.
@@ -42,7 +45,7 @@ paths:
       summary: Get the current application session
       description: |
         Returns the application identity that the server derived from the
-        validated access token, for SPA navigation and screen presentation.
+        validated bearer token, for SPA navigation and screen presentation.
         Requires a valid bearer access token and no application role. A caller
         with no recognized role receives `200` with an empty `roles` array.
 
@@ -570,10 +573,12 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: |
-        Amazon Cognito access token only (an ID token is not accepted as
-        authorization evidence). The BFF validates the token and derives the
-        application roles from its `cognito:groups` claim; role values supplied
-        by the browser are never used.
+        AWS deployment: Amazon Cognito access token only (an ID token is not
+        accepted as authorization evidence). The BFF validates the token and
+        derives the application roles from its `cognito:groups` claim.
+        Local demo (`APP_MODE=local`): one of the fixed, non-secret demo tokens,
+        which the AWS deployment never accepts. In both modes role values
+        supplied by the browser are never used.
   parameters:
     RequestId:
       name: requestId

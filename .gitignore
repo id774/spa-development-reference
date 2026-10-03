@@ -9,3 +9,4 @@ cdk.out/
 *.tsbuildinfo
 backend/src/generated/
 .DS_Store
+.local/

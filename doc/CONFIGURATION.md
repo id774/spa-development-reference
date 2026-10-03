@@ -8,7 +8,9 @@ The backend resolves its configuration once at start-up from environment variabl
 
 | Variable | Required | Default | Purpose | Secret |
 | --- | --- | --- | --- | --- |
-| `HOST` | no | `0.0.0.0` | Interface to listen on. | no |
+| `APP_MODE` | no | `aws` | Adapter set: `aws` (Cognito, S3, SES, SNS) or `local` (local demo adapters). Any other value fails the start-up. `npm run demo` sets `local`; the CDK stack sets `aws`. | no |
+| `LOCAL_DATA_DIR` | no | `../.local` | Local mode only: directory for attachments and delivery records. | no |
+| `HOST` | no | `0.0.0.0` (`127.0.0.1` in local mode) | Interface to listen on. | no |
 | `PORT` | no | `3000` | Port to listen on. Integer `1`-`65535`. | no |
 | `LOG_LEVEL` | no | `info` | Log level passed to the logger (`trace`, `debug`, `info`, `warn`, `error`, or `fatal`). | no |
 | `DATABASE_URL` | one of the two database forms | none | Full PostgreSQL connection URL. Wins over `DB_*` when set. Passed to the driver unchanged. | yes (contains credentials) |
@@ -38,6 +40,7 @@ The backend resolves its configuration once at start-up from environment variabl
 
 Notes:
 
+- **Application mode**: `APP_MODE=aws` is the default and keeps every AWS value required; there is no fallback to local behavior. In `APP_MODE=local` the `COGNITO_*`, `AWS_REGION`, `S3_BUCKET`, `SES_SENDER`, and `SNS_TOPIC_ARN` values are neither required nor read, the database defaults to `postgresql://postgres:postgres@127.0.0.1:55432/spa_reference` (the `compose.yaml` database), and the fixed demo tokens `demo-requester`, `demo-approver`, and `demo-administrator` are accepted. Those tokens are non-secret demo values; `aws` mode never accepts them. Local mode is for a single machine only. See [`GETTING_STARTED.md`](GETTING_STARTED.md), section 4.
 - **Database**: with `DATABASE_URL` unset, the URL is built from `DB_HOST`, `DB_NAME`, `DB_USERNAME`, and `DB_PASSWORD` (all four must be set; `DB_PORT` defaults to `5432`). A URL built this way has no query parameters.
 - **Capability mode**: `local` is the only supported value. Any other value, including `remote`, fails the start-up. Routing is fixed for the lifetime of the process.
 - **AWS credentials** are not application settings. The AWS SDK finds them in its standard chain: the ECS task role when deployed, the environment or a profile locally.
@@ -50,6 +53,7 @@ The SPA loads `/config.json` before it starts. If any value is missing or is not
 
 | `config.json` key | Container environment variable | Purpose |
 | --- | --- | --- |
+| `authMode` | none | `cognito` or `local`. Required. `local` needs no other key and shows the role-selection sign-in screen. |
 | `cognito.clientId` | `COGNITO_CLIENT_ID` | Public app client ID. |
 | `cognito.authorizationEndpoint` | `COGNITO_AUTHORIZATION_ENDPOINT` | Cognito authorization endpoint (`.../oauth2/authorize`). |
 | `cognito.tokenEndpoint` | `COGNITO_TOKEN_ENDPOINT` | Cognito token endpoint (`.../oauth2/token`). |
@@ -57,8 +61,8 @@ The SPA loads `/config.json` before it starts. If any value is missing or is not
 | `redirectUri` | `APP_REDIRECT_URI` | OAuth redirect URI, `<origin>/auth/callback`. |
 | `postLogoutUri` | `APP_POST_LOGOUT_URI` | Return URI after sign-out, `<origin>/signed-out`. |
 
-- **Development**: `frontend/public/config.json` is the file served by `npm run dev -w @spa-ref/frontend`. It contains placeholder values for `http://localhost:5173`. Edit it locally to use a real app client; do not commit real values.
-- **Container**: the frontend image does not contain a `config.json`. At start-up `frontend/nginx/40-runtime-config.sh` renders it from `frontend/nginx/config.json.template` using the six environment variables above, and the container refuses to start if any is missing. The CDK stack supplies them (see [`DEPLOYMENT.md`](DEPLOYMENT.md)).
+- **Development**: `frontend/public/config.json` is the file served by `npm run dev -w @spa-ref/frontend`. It holds `{"authMode": "local"}` for the local demo. To use a real Cognito app client, replace it locally with `authMode: "cognito"` and the keys above; do not commit real values. The `cognito.*`, `redirectUri`, and `postLogoutUri` keys are required only when `authMode` is `cognito`.
+- **Container**: the frontend image does not contain a `config.json`. At start-up `frontend/nginx/40-runtime-config.sh` renders it from `frontend/nginx/config.json.template` using the six environment variables above (it always renders `authMode: "cognito"`), and the container refuses to start if any is missing. The CDK stack supplies them (see [`DEPLOYMENT.md`](DEPLOYMENT.md)).
 - Redirect and sign-out URIs must be registered on the Cognito app client; the CDK stack registers `<origin>/auth/callback` and `<origin>/signed-out`.
 
 ## 3. CDK context

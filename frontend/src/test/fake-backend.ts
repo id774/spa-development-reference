@@ -24,6 +24,8 @@ export class FakeBackend {
   calls: string[] = [];
   tokenGrants: URLSearchParams[] = [];
   validTokens = new Set<string>();
+  /** Identities issued per token (local demo); overrides subject/roles for those tokens. */
+  tokenIdentities = new Map<string, { subject: string; roles: SessionRole[] }>();
   /** Roles issued with the next refreshed token. */
   rolesAfterRefresh: SessionRole[] | null = null;
   expiresInSeconds = 3600;
@@ -66,7 +68,10 @@ export class FakeBackend {
     }
     const path = url.pathname;
 
-    if (path === '/api/session') return json({ subject: this.subject, roles: this.roles });
+    if (path === '/api/session') {
+      const identity = this.tokenIdentities.get(authorization.replace('Bearer ', ''));
+      return json(identity ?? { subject: this.subject, roles: this.roles });
+    }
     if (path === '/api/requests' && method === 'GET') {
       const own = this.requests.filter(
         (r) => r.requesterId === this.subject || this.roles.includes('Administrator'),

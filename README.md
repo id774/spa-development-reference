@@ -10,7 +10,7 @@ It demonstrates one supported way to compose these technologies and their cross-
 - **Approver**: work an approval queue; approve or reject submitted requests.
 - **Administrator**: read all requests and inspect the audit history.
 - Attachment list, upload, and download.
-- Cognito authentication (OAuth 2.0 Authorization Code with PKCE) and role-based authorization.
+- A fully local demo (`npm run demo`) with fixed demo identities, and Cognito authentication (OAuth 2.0 Authorization Code with PKCE) in the AWS deployment, with role-based authorization in both.
 - Aurora PostgreSQL-compatible persistence with optimistic concurrency and local transactions.
 - S3 attachment storage, SES email, and SNS event publication delivered through a transactional outbox.
 - Business audit events and structured application logging, kept separate.
@@ -38,13 +38,24 @@ Node.js 24 with npm workspaces; React, TypeScript, and Vite; NestJS; Prisma with
 
 ## Quick start
 
-**New here? Start with [`doc/GETTING_STARTED.md`](doc/GETTING_STARTED.md).** It takes you from `git clone` to a finished demo and says exactly what each step proves. Pick the path you need:
+The first runnable path is a fully local demo. It needs no AWS account, Cognito, S3, SES, SNS, Aurora, ACM, DNS, external identity provider, API key, or `.env` file. Docker is required locally for PostgreSQL.
 
-- **Verify the repository**: install, test, build, and validate everything without AWS. See [Level 1](doc/GETTING_STARTED.md#4-level-1-repository-validation).
-- **See the UI**: run the frontend alone and look at the signed-out screen. This is a rendering check, not a working sign-in. See [Level 2](doc/GETTING_STARTED.md#5-level-2-ui-smoke-check).
-- **Run the full demo**: deploy the AWS stack, create users, and walk through the Requester, Approver, and Administrator workflow. See [Level 3](doc/GETTING_STARTED.md#7-level-3-full-end-to-end-demo).
+Prerequisites: Node.js 24 and Docker with Compose.
 
-The repository's placeholder configuration is not enough to sign in: authenticated use needs a real Cognito user pool, which the deployed stack provides. To use the application once it runs, read [`doc/USER_GUIDE.md`](doc/USER_GUIDE.md).
+```bash
+git clone https://github.com/id774/spa-development-reference.git
+cd spa-development-reference
+npm ci
+npm run demo
+```
+
+Then open <http://localhost:5173/> and choose **Continue as Requester**, **Continue as Approver**, or **Continue as Administrator**. Sign out to switch roles. Create a request, attach a file, submit it, approve it as the Approver, and inspect the audit history as the Administrator.
+
+Emails and events are recorded as local files under `.local/deliveries/`, and attachments under `.local/attachments/`. `npm run demo:down` stops PostgreSQL and keeps the data; `npm run demo:reset` removes the demo data.
+
+The local demo uses fixed demo identities and no real authentication. It is for learning and evaluation only and must never be exposed beyond your machine. It reuses the same application logic, HTTP API, database model, transactional outbox, and authorization as the AWS deployment; only the external infrastructure adapters differ. The AWS deployment (`APP_MODE=aws`, the default) uses Cognito and never accepts the demo tokens.
+
+Next steps, in [`doc/GETTING_STARTED.md`](doc/GETTING_STARTED.md): validate the repository without AWS (Milestone 2), and deploy the AWS stack (Milestone 3). To use the application, read [`doc/USER_GUIDE.md`](doc/USER_GUIDE.md).
 
 ## Validation
 
@@ -72,6 +83,7 @@ Details, including the database that the backend tests need, are in [`doc/GETTIN
 | `packages/api-client/` | API client generated from the OpenAPI contract |
 | `openapi/` | The browser-facing HTTP contract |
 | `infra/` | AWS CDK application |
+| `compose.yaml`, `scripts/` | Local demo PostgreSQL and the demo commands |
 | `doc/` | Specifications, guides, and license files |
 | `.github/workflows/` | CI |
 

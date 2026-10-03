@@ -1,17 +1,11 @@
 // License: The GPL version 3, or LGPL version 3 (Dual License).
 import 'reflect-metadata';
-import { S3Client } from '@aws-sdk/client-s3';
-import { SESv2Client } from '@aws-sdk/client-sesv2';
-import { SNSClient } from '@aws-sdk/client-sns';
+import { createAdapters } from './adapters.js';
 import { composeServices } from './compose.js';
 import { createApp } from './create-app.js';
 import { ConfigError, loadConfig } from './common/config.js';
 import { createLogger, describeError } from './common/logging.js';
 import { randomIds, systemClock } from './common/ports.js';
-import { CognitoIdentityProvider } from './infrastructure/aws/cognito/cognito-identity-provider.js';
-import { S3ObjectStorage } from './infrastructure/aws/s3/s3-object-storage.js';
-import { SesMailSender } from './infrastructure/aws/ses/ses-mail-sender.js';
-import { SnsEventPublisher } from './infrastructure/aws/sns/sns-event-publisher.js';
 import { PrismaOutboxStore } from './infrastructure/persistence/prisma-outbox-store.js';
 import { PrismaPersistence } from './infrastructure/persistence/prisma-persistence.js';
 import { OutboxWorker } from './outbox/outbox-worker.js';
@@ -22,11 +16,12 @@ async function main(): Promise<void> {
   const logger = createLogger(config.logLevel);
 
   const persistence = new PrismaPersistence(config.database.url);
-  const region = config.aws.region;
+  // The only mode switch: it selects the infrastructure adapters.
+  const adapters = createAdapters(config, logger);
   const services = composeServices({
     persistence,
-    identity: new CognitoIdentityProvider(config.cognito, logger),
-    storage: new S3ObjectStorage(new S3Client({ region }), config.s3.bucket),
+    identity: adapters.identity,
+    storage: adapters.storage,
     clock: systemClock,
     ids: randomIds,
     logger,
@@ -37,8 +32,8 @@ async function main(): Promise<void> {
 
   const worker = new OutboxWorker(
     new PrismaOutboxStore(persistence.client),
-    new SesMailSender(new SESv2Client({ region }), config.ses.sender),
-    new SnsEventPublisher(new SNSClient({ region }), config.sns.topicArn),
+    adapters.mail,
+    adapters.events,
     systemClock,
     randomIds,
     logger,
@@ -48,7 +43,13 @@ async function main(): Promise<void> {
   const app = await createApp(services);
   await app.listen(config.http.port, config.http.host);
   worker.start();
-  logger.info('backend started', { port: config.http.port });
+  if (config.mode === 'local') {
+    logger.warn(
+      'local demo mode: demo bearer tokens are accepted and nothing leaves this machine; never expose this process',
+      { dataDir: config.local.dataDir },
+    );
+  }
+  logger.info('backend started', { port: config.http.port, mode: config.mode });
 
   let stopping = false;
   const shutdown = async (signal: string): Promise<void> => {

@@ -25,6 +25,7 @@ import { RequestDetailPage } from '../features/requests/RequestDetailPage.js';
 import { RequestListPage } from '../features/requests/RequestListPage.js';
 import { RequestNewPage } from '../features/requests/RequestNewPage.js';
 import { useAuth } from '../shared/auth/AuthProvider.js';
+import { LOCAL_DEMO_ROLES } from '../shared/auth/local-demo.js';
 
 const NO_ROLE_MESSAGE =
   'Your account has no application role. Ask an administrator to grant access.';
@@ -95,13 +96,40 @@ function Home() {
 }
 
 function SignedOutPage() {
-  const { signIn, status } = useAuth();
+  const { authMode, signIn, signInLocal, status } = useAuth();
+  const [localFailed, setLocalFailed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const returnPath = (location.state as { returnPath?: string } | null)?.returnPath ?? '/';
   useEffect(() => {
     if (status === 'signed-in') void navigate('/', { replace: true });
   }, [navigate, status]);
+  if (authMode === 'local') {
+    return (
+      <main className="signed-out">
+        <h1>You are signed out</h1>
+        <p>Local demo: choose a role to continue. No external service is used.</p>
+        {localFailed ? (
+          <ErrorMessage
+            title="The local demo backend did not accept the selection."
+            detail="Check that npm run demo is running."
+          />
+        ) : null}
+        {LOCAL_DEMO_ROLES.map((role) => (
+          <Button
+            key={role}
+            variant="primary"
+            onClick={() => {
+              setLocalFailed(false);
+              signInLocal(role).catch(() => setLocalFailed(true));
+            }}
+          >
+            Continue as {role}
+          </Button>
+        ))}
+      </main>
+    );
+  }
   return (
     <main className="signed-out">
       <h1>You are signed out</h1>

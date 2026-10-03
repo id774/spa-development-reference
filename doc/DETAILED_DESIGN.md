@@ -173,6 +173,22 @@ The callback path is `/auth/callback`.
 
 The signed-out path is `/signed-out`.
 
+### 6.1.1 Local demo identity
+
+When the backend runs with `APP_MODE=local` and the SPA runtime configuration
+has `authMode` `local`, no OAuth flow is used. The sign-in screen offers one
+button per role. Each button uses a fixed, non-secret demo bearer token
+(`demo-requester`, `demo-approver`, `demo-administrator`) that the local
+identity adapter maps to the subject `local-requester`, `local-approver`, or
+`local-administrator`, one role, and the verified email
+`requester@example.test`, `approver@example.test`, or
+`administrator@example.test`. An unknown token is `401 AUTHENTICATION_REQUIRED`.
+The SPA still obtains its session from `GET /api/session`, keeps the token in
+memory only, and local sign-out clears that state without leaving the page.
+With `APP_MODE=aws` (the default) these tokens are never accepted. Only the
+adapters for identity, object storage, email delivery, and event publication
+depend on the mode; evaluation order, authorization, and persistence do not.
+
 ### 6.2 Redirect transaction state
 
 The authorization redirect requires temporary browser state that survives the

@@ -1,5 +1,5 @@
 // License: The GPL version 3, or LGPL version 3 (Dual License).
-import type { RuntimeConfig } from '../../app/config.js';
+import type { CognitoRuntimeConfig } from '../../app/config.js';
 import type { Tokens } from './token-store.js';
 
 export class AuthError extends Error {}
@@ -49,7 +49,7 @@ export const transaction = {
 };
 
 export function authorizationUrl(
-  config: RuntimeConfig,
+  config: CognitoRuntimeConfig,
   params: { state: string; challenge: string },
 ): string {
   const url = new URL(config.cognito.authorizationEndpoint);
@@ -63,7 +63,7 @@ export function authorizationUrl(
   return url.toString();
 }
 
-export function logoutUrl(config: RuntimeConfig): string {
+export function logoutUrl(config: CognitoRuntimeConfig): string {
   const url = new URL(config.cognito.logoutEndpoint);
   url.searchParams.set('client_id', config.cognito.clientId);
   url.searchParams.set('logout_uri', config.postLogoutUri);
@@ -77,7 +77,7 @@ interface TokenResponse {
 }
 
 async function requestTokens(
-  config: RuntimeConfig,
+  config: CognitoRuntimeConfig,
   fetchImpl: typeof fetch,
   body: URLSearchParams,
   now: () => number,
@@ -102,7 +102,7 @@ async function requestTokens(
 }
 
 export function exchangeCode(
-  config: RuntimeConfig,
+  config: CognitoRuntimeConfig,
   fetchImpl: typeof fetch,
   params: { code: string; verifier: string },
   now: () => number,
@@ -123,7 +123,7 @@ export function exchangeCode(
 }
 
 export function refreshTokens(
-  config: RuntimeConfig,
+  config: CognitoRuntimeConfig,
   fetchImpl: typeof fetch,
   refreshToken: string,
   now: () => number,

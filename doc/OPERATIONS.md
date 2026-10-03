@@ -79,3 +79,14 @@ Only what [`infra/lib/reference-stack.ts`](../infra/lib/reference-stack.ts) sets
 | Notification delivery failing | Business operations succeed; rows stay `PENDING` with growing `attempt_count`, then `FAILED`. | `outbox delivery failed` log lines (fields `deliveryId`, `channel`, `attempt`, `final`) and the `outbox_deliveries` table |
 | Invalid configuration | The backend exits at start-up with code 1 and a message `Invalid configuration:` listing each problem on standard error. The frontend container exits when a required runtime variable is missing. ECS keeps trying to start replacement tasks. | Container logs |
 | Unexpected error in a request | `500 INTERNAL_ERROR` with a `traceId` and no internal detail. | Search the logs for that `traceId` |
+
+## 8. Local demo mode
+
+`APP_MODE=local` (started by `npm run demo`) is for a single machine and is not an operated environment. The behavior differs from the AWS deployment only in the external adapters:
+
+- Attachment content is stored under `.local/attachments/<requestId>/<attachmentId>`; the object-key rules are the same and a key that would leave that directory is refused.
+- Email and event deliveries still go through the outbox, with the same states, retries, and claim behavior. The delivery adapters append one JSON line per delivery to `.local/deliveries/email.ndjson` and `.local/deliveries/events.ndjson`.
+- The backend logs a warning at start-up that demo tokens are accepted, and listens on `127.0.0.1` by default.
+- `npm run demo:reset` removes the database volume and `.local/`.
+
+No SES, SNS, S3, or Cognito call is made in this mode.
