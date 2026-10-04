@@ -24,7 +24,7 @@
 
 openapi: 3.1.0
 info:
-  title: SPA Development Reference API
+  title: SPA Reference API
   version: 0.1.0
   description: |
     Normative browser-facing HTTP contract of the SPA development reference
