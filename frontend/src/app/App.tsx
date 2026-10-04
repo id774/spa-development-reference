@@ -51,7 +51,7 @@ import { RequestNewPage } from '../features/requests/RequestNewPage.js';
 import { useAuth } from '../shared/auth/AuthProvider.js';
 import { LOCAL_DEMO_ROLES } from '../shared/auth/local-demo.js';
 
-const APP_TITLE = 'SPA Development Reference';
+const APP_TITLE = 'SPA Reference';
 
 const ROLE_SUMMARY: Readonly<Record<SessionRole, string>> = {
   Requester: 'Create and submit requests',
